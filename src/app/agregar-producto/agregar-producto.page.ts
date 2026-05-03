@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { 
   IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, 
-  IonBackButton, IonItem, IonInput, IonButton, IonNote 
+  IonBackButton, IonItem, IonInput, IonButton, IonLabel
 } from '@ionic/angular/standalone';
 import { InventarioService, Producto } from '../services/inventario';
 @Component({
@@ -14,7 +14,7 @@ import { InventarioService, Producto } from '../services/inventario';
   standalone: true,
   imports: [
     CommonModule, FormsModule, IonContent, IonHeader, IonTitle, 
-    IonToolbar, IonButtons, IonBackButton, IonItem, IonInput, IonButton, IonNote
+    IonToolbar, IonButtons, IonBackButton, IonItem, IonInput, IonButton, IonLabel
   ]
 })
 export class AgregarProductoPage {

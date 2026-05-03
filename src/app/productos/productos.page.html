@@ -27,9 +27,9 @@
         <h2>{{ producto.nombre }}</h2>
         <p>
           {{ producto.medida }} | Stock: 
-          <strong [style.color]="producto.stock < 10 ? 'red' : 'inherit'">
-            {{ producto.stock }}
-          </strong>
+          <strong [style.color]="producto.stock !== null && producto.stock < 10 ? 'red' : 'inherit'">
+  {{ producto.stock !== null ? producto.stock : 'Sin definir' }}
+</strong>
         </p>
       </ion-label>
 
