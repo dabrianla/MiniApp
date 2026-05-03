@@ -35,3 +35,20 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
+
+:root {
+  /* Celeste */
+  --ion-color-primary: #1eb4e6;
+  --ion-color-primary-rgb: 30,180,230;
+  --ion-color-primary-contrast: #000000;
+
+  /* Amarillo */
+  --ion-color-secondary: #ffce00;
+  --ion-color-secondary-rgb: 255,206,0;
+  --ion-color-secondary-contrast: #000000;
+
+  /* Negro/Oscuro */
+  --ion-color-dark: #121212;
+  --ion-color-dark-rgb: 18,18,18;
+  --ion-color-dark-contrast: #ffffff;
+}

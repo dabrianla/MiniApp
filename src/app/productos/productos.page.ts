@@ -1,13 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonHeader, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { IonicModule } from '@ionic/angular';
+import { 
+  IonContent, IonHeader, IonTitle, IonToolbar, 
+  IonButtons, IonMenuButton, IonSearchbar, 
+  IonList, IonItem, IonThumbnail, IonLabel, IonFab, IonFabButton, IonIcon, IonRouterLink 
+} from '@ionic/angular/standalone';
+
+import { InventarioService, Producto } from '../services/inventario.service';
 
 export interface Producto {
   id: string;
   nombre: string;
-  marca: string;
   medida: string;
   stock: number;
   precio: number;
@@ -19,54 +23,61 @@ export interface Producto {
   templateUrl: './productos.page.html',
   styleUrls: ['./productos.page.scss'],
   standalone: true,
-  imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule, IonicModule]
+  // Aquí declaramos todo lo que el HTML va a utilizar
+  imports: [
+    CommonModule, 
+    FormsModule,
+    IonContent, IonHeader, IonTitle, IonToolbar, 
+    IonButtons, IonMenuButton, IonSearchbar, 
+    IonList, IonItem, IonThumbnail, IonLabel
+  ]
 })
 export class ProductosPage implements OnInit {
-
+  
+  // Lista original de productos
   productos: Producto[] = [
     {
-      id: '1',
+      id: '789123456',
       nombre: 'Aceite de Girasol',
-      marca: 'acuenta',
-      medida: '1L',
+      medida: '1 Litro',
       stock: 15,
-      precio: 1900,
-      imagen: 'assets/img/producto1.jpg'
+      precio: 2500,
+      imagen: 'https://ionicframework.com/docs/img/demos/thumbnail.svg'
     },
     {
-      id: '2',
-      nombre: 'Arroz',
-      marca: 'tucapel',
-      medida: '1kg',
-      stock: 7,
+      id: '789654321',
+      nombre: 'Arroz Grano Largo',
+      medida: '1 kg',
+      stock: 8,
       precio: 1200,
-      imagen: 'assets/img/producto2.jpg'
+      imagen: 'https://ionicframework.com/docs/img/demos/thumbnail.svg'
+    },
+    {
+      id: '789987654',
+      nombre: 'Bebida Cola',
+      medida: '2.5 Litros',
+      stock: 30,
+      precio: 1800,
+      imagen: 'https://ionicframework.com/docs/img/demos/thumbnail.svg'
     }
   ];
 
   productosFiltrados: Producto[] = [];
 
-  constructor() { }
+  constructor(public inventarioService: InventarioService) { }
 
   ngOnInit() {
-    // Al iniciar, mostramos todos los productos
-    this.productosFiltrados = [...this.productos];
+    this.productosFiltrados = this.inventarioService.productos;
   }
 
   buscarProducto(event: any) {
     const textoBusqueda = event.target.value.toLowerCase();
-
-    // Si el texto está vacío, mostramos todo
     if (textoBusqueda.trim() === '') {
       this.productosFiltrados = [...this.productos];
       return;
     }
-
-    // Filtramos por nombre
     this.productosFiltrados = this.productos.filter(producto => {
       return producto.nombre.toLowerCase().includes(textoBusqueda);
     });
   }
 }
-
-
