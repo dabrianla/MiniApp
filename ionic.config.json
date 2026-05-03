@@ -1,0 +1,7 @@
+{
+  "name": "MiniApp",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
