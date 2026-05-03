@@ -1,0 +1,42 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Inventario</ion-title>
+  </ion-toolbar>
+  
+  <ion-toolbar color="primary">
+    <ion-searchbar 
+      placeholder="Buscar producto..." 
+      (ionInput)="buscarProducto($event)"
+      animated="true">
+    </ion-searchbar>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <ion-item *ngFor="let producto of productosFiltrados">
+      
+      <ion-thumbnail slot="start">
+        <img [src]="producto.imagen" alt="Foto de {{ producto.nombre }}" />
+      </ion-thumbnail>
+
+      <ion-label>
+        <h2>{{ producto.nombre }}</h2>
+        <p>
+          {{ producto.medida }} | Stock: 
+          <strong [style.color]="producto.stock < 10 ? 'red' : 'inherit'">
+            {{ producto.stock }}
+          </strong>
+        </p>
+      </ion-label>
+
+      <div slot="end" class="precio-destacado">
+        ${{ producto.precio }}
+      </div>
+      
+    </ion-item>
+  </ion-list>
+</ion-content>

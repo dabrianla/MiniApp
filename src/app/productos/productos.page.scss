@@ -1,0 +1,18 @@
+.precio-destacado {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--ion-color-success); /* Color verde nativo de Ionic */
+  background: rgba(var(--ion-color-success-rgb), 0.1); /* Fondo sutil */
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ajustes para el texto principal del producto */
+ion-label h2 {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
