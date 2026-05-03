@@ -46,10 +46,12 @@ export class AgregarProductoPage {
     const productoAguardar: Producto = {
       id: Date.now().toString(), // Generamos un ID único temporal
       nombre: this.nuevoProducto.nombre,
+      marca: this.nuevoProducto.marca || 'Marca Genérica', // Podríamos agregar un campo para esto en el futuro
       medida: this.nuevoProducto.medida,
       precio: this.nuevoProducto.precio,
       stock: this.nuevoProducto.stock || 0, // Si no pone stock, asume 0
-      imagen: this.nuevoProducto.imagen
+      imagen: this.nuevoProducto.imagen,
+      distribuidor: this.nuevoProducto.distribuidor || 'Distribuidor Genérico' // Podríamos agregar un campo para esto en el futuro
     };
 
     // Guardamos y volvemos a la lista

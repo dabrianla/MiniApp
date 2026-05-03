@@ -25,35 +25,7 @@ import { addIcons } from 'ionicons'; // <-- Y ESTA TAMBIÉN
     IonList, IonItem, IonThumbnail, IonLabel, IonFab, IonFabButton, IonIcon, RouterLink
   ]
 })
-export class ProductosPage implements OnInit {
-  
-  // Lista original de productos
-  productos: Producto[] = [
-    {
-      id: '789123456',
-      nombre: 'Aceite de Girasol',
-      medida: '1 Litro',
-      stock: 15,
-      precio: 2500,
-      imagen: 'https://ionicframework.com/docs/img/demos/thumbnail.svg'
-    },
-    {
-      id: '789654321',
-      nombre: 'Arroz Grano Largo',
-      medida: '1 kg',
-      stock: 8,
-      precio: 1200,
-      imagen: 'https://ionicframework.com/docs/img/demos/thumbnail.svg'
-    },
-    {
-      id: '789987654',
-      nombre: 'Bebida Cola',
-      medida: '2.5 Litros',
-      stock: 30,
-      precio: 1800,
-      imagen: 'https://ionicframework.com/docs/img/demos/thumbnail.svg'
-    }
-  ];
+export class ProductosPage {
 
   productosFiltrados: Producto[] = [];
 
@@ -61,17 +33,20 @@ export class ProductosPage implements OnInit {
     addIcons({ add });
    }
 
-  ngOnInit() {
-    this.productosFiltrados = this.inventarioService.productos;
+  ionViewWillEnter() {
+    this.productosFiltrados = [...this.inventarioService.productos];
   }
 
   buscarProducto(event: any) {
     const textoBusqueda = event.target.value.toLowerCase();
+
+    // Filtramos directamente desde la fuente de verdad (el servicio)
     if (textoBusqueda.trim() === '') {
-      this.productosFiltrados = [...this.productos];
+      this.productosFiltrados = [...this.inventarioService.productos];
       return;
     }
-    this.productosFiltrados = this.productos.filter(producto => {
+
+    this.productosFiltrados = this.inventarioService.productos.filter(producto => {
       return producto.nombre.toLowerCase().includes(textoBusqueda);
     });
   }
