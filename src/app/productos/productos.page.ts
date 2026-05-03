@@ -1,26 +1,28 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { 
-  IonContent, IonHeader, IonTitle, IonToolbar, 
-  IonButtons, IonMenuButton, IonSearchbar, 
-  IonList, IonItem, IonThumbnail, IonLabel, IonFab, IonFabButton, IonIcon, IonRouterLink 
+import { RouterLink } from '@angular/router'; // <-- AGREGAR ESTO
+import {
+  IonContent, IonHeader, IonTitle, IonToolbar,
+  IonButtons, IonMenuButton, IonSearchbar,
+  IonList, IonItem, IonThumbnail, IonLabel,
+  IonFab, IonFabButton, IonIcon // <-- AGREGAR ESTOS TRES
 } from '@ionic/angular/standalone';
-
 import { InventarioService, Producto } from '../services/inventario';
+import { add } from 'ionicons/icons'; // <-- AGREGAR ESTA IMPORTACIÓN ARRIBA
+import { addIcons } from 'ionicons'; // <-- Y ESTA TAMBIÉN
 
 @Component({
   selector: 'app-productos',
   templateUrl: './productos.page.html',
   styleUrls: ['./productos.page.scss'],
   standalone: true,
-  // Aquí declaramos todo lo que el HTML va a utilizar
   imports: [
     CommonModule, 
     FormsModule,
     IonContent, IonHeader, IonTitle, IonToolbar, 
     IonButtons, IonMenuButton, IonSearchbar, 
-    IonList, IonItem, IonThumbnail, IonLabel, IonFab, IonFabButton, IonIcon, IonRouterLink
+    IonList, IonItem, IonThumbnail, IonLabel, IonFab, IonFabButton, IonIcon, RouterLink
   ]
 })
 export class ProductosPage implements OnInit {
@@ -55,7 +57,9 @@ export class ProductosPage implements OnInit {
 
   productosFiltrados: Producto[] = [];
 
-  constructor(public inventarioService: InventarioService) { }
+  constructor(public inventarioService: InventarioService) {
+    addIcons({ add });
+   }
 
   ngOnInit() {
     this.productosFiltrados = this.inventarioService.productos;
