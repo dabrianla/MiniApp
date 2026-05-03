@@ -6,8 +6,7 @@ import {
   IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, 
   IonBackButton, IonItem, IonInput, IonButton, IonNote 
 } from '@ionic/angular/standalone';
-import { InventarioService, Producto } from '../services/inventario.service';
-
+import { InventarioService, Producto } from '../services/inventario';
 @Component({
   selector: 'app-agregar-producto',
   templateUrl: './agregar-producto.page.html',

@@ -7,16 +7,7 @@ import {
   IonList, IonItem, IonThumbnail, IonLabel, IonFab, IonFabButton, IonIcon, IonRouterLink 
 } from '@ionic/angular/standalone';
 
-import { InventarioService, Producto } from '../services/inventario.service';
-
-export interface Producto {
-  id: string;
-  nombre: string;
-  medida: string;
-  stock: number;
-  precio: number;
-  imagen: string;
-}
+import { InventarioService, Producto } from '../services/inventario';
 
 @Component({
   selector: 'app-productos',
@@ -29,7 +20,7 @@ export interface Producto {
     FormsModule,
     IonContent, IonHeader, IonTitle, IonToolbar, 
     IonButtons, IonMenuButton, IonSearchbar, 
-    IonList, IonItem, IonThumbnail, IonLabel
+    IonList, IonItem, IonThumbnail, IonLabel, IonFab, IonFabButton, IonIcon, IonRouterLink
   ]
 })
 export class ProductosPage implements OnInit {
