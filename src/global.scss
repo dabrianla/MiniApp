@@ -52,3 +52,12 @@
   --ion-color-dark-rgb: 18,18,18;
   --ion-color-dark-contrast: #ffffff;
 }
+
+/* Esta clase se activa solo cuando el escáner está abierto */
+body.qrscanner {
+  --ion-background-color: transparent !important;
+}
+
+body.qrscanner ion-content {
+  --background: transparent !important;
+}

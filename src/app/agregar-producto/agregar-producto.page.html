@@ -35,6 +35,16 @@
     <ion-input label="Distribuidor" labelPlacement="floating" [(ngModel)]="nuevoProducto.distribuidor" type="text"></ion-input>
   </ion-item>
 
+  <p *ngIf="mensajeError" style="color: red;">{{ mensajeError }}</p>
+
+  <ion-button expand="block" color="secondary" (click)="escanearCodigo()" style="color: black; margin-bottom: 15px;">
+    <strong>Escanear Código</strong>
+  </ion-button>
+
+  <ion-item>
+    <ion-input label="Código de Barras *" labelPlacement="floating" [(ngModel)]="nuevoProducto.codigoBarras" type="text"></ion-input>
+  </ion-item>
+
   <ion-item>
     <ion-label position="stacked">Foto (Opcional)</ion-label>
     <input type="file" accept="image/*" (change)="cargarImagen($event)" style="margin-top: 10px;" />

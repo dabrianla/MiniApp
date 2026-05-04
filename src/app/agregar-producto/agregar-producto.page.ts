@@ -7,6 +7,7 @@ import {
   IonBackButton, IonItem, IonInput, IonButton, IonLabel
 } from '@ionic/angular/standalone';
 import { InventarioService, Producto } from '../services/inventario';
+import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 @Component({
   selector: 'app-agregar-producto',
   templateUrl: './agregar-producto.page.html',
@@ -42,9 +43,12 @@ export class AgregarProductoPage {
       return;
     }
 
+    
+
     // Creamos el producto final
     const productoAguardar: Producto = {
       id: Date.now().toString(), // Generamos un ID único temporal
+      codigoBarras: '0000000000000', // Código de barras genérico por ahora
       nombre: this.nuevoProducto.nombre,
       marca: this.nuevoProducto.marca || 'Marca Genérica', // Podríamos agregar un campo para esto en el futuro
       medida: this.nuevoProducto.medida,
@@ -57,6 +61,33 @@ export class AgregarProductoPage {
     // Guardamos y volvemos a la lista
     this.inventarioService.agregarProducto(productoAguardar);
     this.router.navigate(['/productos']);
+  }
+
+  async escanearCodigo() {
+    try {
+      // 1. Pedir permisos de cámara
+      await BarcodeScanner.checkPermission({ force: true });
+      
+      // 2. Hacer transparente el fondo de la app (la cámara está por "detrás" de la pantalla)
+      BarcodeScanner.hideBackground();
+      document.body.classList.add('qrscanner'); // Usamos esto para quitar los fondos blancos
+
+      // 3. ¡Encender cámara y esperar a que detecte un código!
+      const result = await BarcodeScanner.startScan(); 
+
+      // 4. Si escanea algo exitosamente...
+      if (result.hasContent) {
+        this.nuevoProducto.codigoBarras = result.content; // Rellenamos el input automáticamente
+      }
+
+      // 5. Apagar cámara y restaurar la pantalla
+      BarcodeScanner.showBackground();
+      document.body.classList.remove('qrscanner');
+
+    } catch (error) {
+      console.error('Error usando el escáner', error);
+      alert('La cámara nativa solo funciona cuando instales la app en un teléfono real.');
+    }
   }
 
   // Función temporal para la imagen
