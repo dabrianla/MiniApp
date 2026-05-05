@@ -29,6 +29,7 @@ export class AgregarProductoPage {
     imagen: 'https://ionicframework.com/docs/img/demos/thumbnail.svg' // imagen por defecto
   };
 
+  escaneando: boolean = false;
   mensajeError: string = '';
 
   constructor(
@@ -42,8 +43,6 @@ export class AgregarProductoPage {
       this.mensajeError = 'Nombre, gramaje/litro y precio son obligatorios.';
       return;
     }
-
-    
 
     // Creamos el producto final
     const productoAguardar: Producto = {
@@ -65,37 +64,46 @@ export class AgregarProductoPage {
 
   async escanearCodigo() {
     try {
-      // 1. Pedir permisos de cámara
       await BarcodeScanner.checkPermission({ force: true });
       
-      // 2. Hacer transparente el fondo de la app (la cámara está por "detrás" de la pantalla)
       BarcodeScanner.hideBackground();
-      document.body.classList.add('qrscanner'); // Usamos esto para quitar los fondos blancos
+      document.body.classList.add('qrscanner');
+      
+      this.escaneando = true; //
 
-      // 3. ¡Encender cámara y esperar a que detecte un código!
       const result = await BarcodeScanner.startScan(); 
 
-      // 4. Si escanea algo exitosamente...
       if (result.hasContent) {
-        this.nuevoProducto.codigoBarras = result.content; // Rellenamos el input automáticamente
+        this.nuevoProducto.codigoBarras = result.content; 
       }
-
-      // 5. Apagar cámara y restaurar la pantalla
-      BarcodeScanner.showBackground();
-      document.body.classList.remove('qrscanner');
-
     } catch (error) {
       console.error('Error usando el escáner', error);
-      alert('La cámara nativa solo funciona cuando instales la app en un teléfono real.');
+    } finally {
+      this.detenerEscaneo();
     }
+  }
+
+  ionViewWillLeave() {
+    // Si la cámara está encendida al momento de salir, la apagamos forzosamente
+    if (this.escaneando) {
+      this.detenerEscaneo();
+    }
+  }
+
+  // 4. NUEVA FUNCIÓN PARA CANCELAR/LIMPIAR EL ESCÁNER
+  detenerEscaneo() {
+    BarcodeScanner.showBackground();
+    BarcodeScanner.stopScan();
+    document.body.classList.remove('qrscanner');
+    this.escaneando = false; //
   }
 
   // Función temporal para la imagen
   cargarImagen(event: any) {
     const file = event.target.files[0];
     if (file) {
-      // Por ahora solo guardamos el nombre del archivo como prueba
       this.nuevoProducto.imagen = URL.createObjectURL(file);
     }
   }
+
 }

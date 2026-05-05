@@ -1,4 +1,4 @@
-<ion-header>
+<ion-header *ngIf="!escaneando">
   <ion-toolbar color="dark">
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/productos" color="secondary"></ion-back-button>
@@ -8,50 +8,55 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  
-  <p *ngIf="mensajeError" style="color: red;">{{ mensajeError }}</p>
 
-  <ion-item>
-    <ion-input label="Nombre del Producto *" labelPlacement="floating" [(ngModel)]="nuevoProducto.nombre" type="text"></ion-input>
-  </ion-item>
+  <div *ngIf="!escaneando">
+    
+    <p *ngIf="mensajeError" style="color: red;">{{ mensajeError }}</p>
 
-  <ion-item>
-    <ion-input label="Marca" labelPlacement="floating" [(ngModel)]="nuevoProducto.marca" type="text"></ion-input>
-  </ion-item>
+    <ion-button expand="block" color="secondary" (click)="escanearCodigo()" style="color: black; margin-bottom: 15px;">
+      <strong>Escanear Código</strong>
+    </ion-button>
 
-  <ion-item>
-    <ion-input label="Gramaje / Litros *" labelPlacement="floating" [(ngModel)]="nuevoProducto.medida" type="text"></ion-input>
-  </ion-item>
+    <ion-item>
+      <ion-input label="Código de Barras *" labelPlacement="floating" [(ngModel)]="nuevoProducto.codigoBarras" type="text"></ion-input>
+    </ion-item>
 
-  <ion-item>
-    <ion-input label="Precio ($) *" labelPlacement="floating" [(ngModel)]="nuevoProducto.precio" type="number"></ion-input>
-  </ion-item>
+    <ion-item>
+      <ion-input label="Nombre del Producto *" labelPlacement="floating" [(ngModel)]="nuevoProducto.nombre" type="text"></ion-input>
+    </ion-item>
 
-  <ion-item>
-    <ion-input label="Stock (Opcional)" labelPlacement="floating" [(ngModel)]="nuevoProducto.stock" type="number"></ion-input>
-  </ion-item>
+    <ion-item>
+      <ion-input label="Marca" labelPlacement="floating" [(ngModel)]="nuevoProducto.marca" type="text"></ion-input>
+    </ion-item>
 
-  <ion-item>
-    <ion-input label="Distribuidor" labelPlacement="floating" [(ngModel)]="nuevoProducto.distribuidor" type="text"></ion-input>
-  </ion-item>
+    <ion-item>
+      <ion-input label="Gramaje / Litros *" labelPlacement="floating" [(ngModel)]="nuevoProducto.medida" type="text"></ion-input>
+    </ion-item>
 
-  <p *ngIf="mensajeError" style="color: red;">{{ mensajeError }}</p>
+    <ion-item>
+      <ion-input label="Precio ($) *" labelPlacement="floating" [(ngModel)]="nuevoProducto.precio" type="number"></ion-input>
+    </ion-item>
 
-  <ion-button expand="block" color="secondary" (click)="escanearCodigo()" style="color: black; margin-bottom: 15px;">
-    <strong>Escanear Código</strong>
-  </ion-button>
+    <ion-item>
+      <ion-input label="Stock (Opcional)" labelPlacement="floating" [(ngModel)]="nuevoProducto.stock" type="number"></ion-input>
+    </ion-item>
 
-  <ion-item>
-    <ion-input label="Código de Barras *" labelPlacement="floating" [(ngModel)]="nuevoProducto.codigoBarras" type="text"></ion-input>
-  </ion-item>
+    <ion-item>
+      <ion-input label="Distribuidor" labelPlacement="floating" [(ngModel)]="nuevoProducto.distribuidor" type="text"></ion-input>
+    </ion-item>
 
-  <ion-item>
-    <ion-label position="stacked">Foto (Opcional)</ion-label>
-    <input type="file" accept="image/*" (change)="cargarImagen($event)" style="margin-top: 10px;" />
-  </ion-item>
+    <ion-item>
+      <ion-label position="stacked">Foto (Opcional)</ion-label>
+      <input type="file" accept="image/*" (change)="cargarImagen($event)" style="margin-top: 10px;" />
+    </ion-item>
 
-  <ion-button expand="block" color="secondary" style="margin-top: 20px; color: black;" (click)="guardarProducto()">
-    <strong>Guardar Producto</strong>
-  </ion-button>
+    <ion-button expand="block" color="secondary" style="margin-top: 20px; color: black;" (click)="guardarProducto()">
+      <strong>Guardar Producto</strong>
+    </ion-button>
 
-</ion-content>
+  </div> <div *ngIf="escaneando" class="contenedor-escaner">
+    <div class="cuadro-enfoque"></div>
+    <ion-button color="danger" (click)="detenerEscaneo()" style="margin-top: 40px;">
+      Cancelar Escaneo
+    </ion-button>
+  </div> </ion-content>
