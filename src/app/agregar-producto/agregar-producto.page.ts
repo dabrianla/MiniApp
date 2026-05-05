@@ -73,9 +73,10 @@ export class AgregarProductoPage {
       const result = await BarcodeScanner.startScan(); 
 
       if (result.hasContent) {
-        this.nuevoProducto.codigoBarras = result.content; 
+        // Convertimos a Texto y quitamos espacios basura
+        this.nuevoProducto.codigoBarras = String(result.content).trim(); 
         
-        // 3. ¡TOCAMOS EL TIMBRE! Para que el número aparezca en el Input al instante
+        // Tocamos el timbre de Angular
         this.cdr.detectChanges();
       }
     } catch (error) {

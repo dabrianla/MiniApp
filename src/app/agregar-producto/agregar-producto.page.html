@@ -18,7 +18,13 @@
     </ion-button>
 
     <ion-item>
-      <ion-input label="Código de Barras *" labelPlacement="floating" [(ngModel)]="nuevoProducto.codigoBarras" type="text"></ion-input>
+      <ion-input 
+        label="Código de Barras *" 
+        labelPlacement="floating" 
+        [(ngModel)]="nuevoProducto.codigoBarras" 
+        name="codigoBarras" 
+        type="text">
+      </ion-input>
     </ion-item>
 
     <ion-item>

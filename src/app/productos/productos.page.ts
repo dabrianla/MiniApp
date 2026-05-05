@@ -8,7 +8,8 @@ import {
   IonList, IonItem, IonThumbnail, IonLabel,
   IonFab, IonFabButton, IonIcon,
   IonSelect, IonSelectOption,
-  IonButton, AlertController// <-- NUEVO: Importamos el botón
+  IonButton, AlertController,
+  IonItemSliding, IonItemOptions, IonItemOption// <-- NUEVO: Importamos el botón
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { add, barcodeOutline } from 'ionicons/icons'; // <-- NUEVO: Ícono de código de barras
@@ -27,7 +28,7 @@ import { BarcodeScanner } from '@capacitor-community/barcode-scanner'; // <-- NU
     IonList, IonItem, IonThumbnail, IonLabel,
     IonFab, IonFabButton, IonIcon,
     IonSelect, IonSelectOption,
-    IonButton // <-- NUEVO: Lo agregamos aquí
+    IonButton, IonItemSliding, IonItemOptions, IonItemOption // <-- NUEVO: Lo agregamos aquí
   ]
 })
 export class ProductosPage {
@@ -88,11 +89,18 @@ export class ProductosPage {
     if (this.filtroDistribuidor !== 'Todos') {
       resultado = resultado.filter(p => p.distribuidor === this.filtroDistribuidor);
     }
-    if (this.textoBusqueda.trim() !== '') {
+    
+    // 👇 BUSCADOR MEJORADO
+    if (this.textoBusqueda && this.textoBusqueda.trim() !== '') {
+      // Limpiamos espacios basura al inicio y al final
+      const termino = this.textoBusqueda.trim().toLowerCase(); 
+      
       resultado = resultado.filter(producto => {
-        const nombre = producto.nombre.toLowerCase();
-        const codigo = producto.codigoBarras ? producto.codigoBarras.toLowerCase() : '';
-        return nombre.includes(this.textoBusqueda) || codigo.includes(this.textoBusqueda);
+        // Obligamos a que el código y nombre se lean como Texto sí o sí
+        const nombre = producto.nombre ? String(producto.nombre).toLowerCase() : '';
+        const codigo = producto.codigoBarras ? String(producto.codigoBarras).toLowerCase() : '';
+        
+        return nombre.includes(termino) || codigo.includes(termino);
       });
     }
 
@@ -110,11 +118,9 @@ export class ProductosPage {
       const result = await BarcodeScanner.startScan(); 
 
       if (result.hasContent) {
-        // 3. Forzamos minúsculas por si el código de barras tiene letras
-        this.textoBusqueda = result.content.toLowerCase(); 
+        // 👇 Le agregamos .trim() aquí para limpiar la lectura
+        this.textoBusqueda = result.content.trim(); 
         this.aplicarFiltros();
-        
-        // 4. ¡TOCAMOS EL TIMBRE! Le avisamos a Angular que actualice la lista
         this.cdr.detectChanges(); 
       }
     } catch (error) {
@@ -123,7 +129,6 @@ export class ProductosPage {
       this.detenerEscaneo();
     }
   }
-
 
   detenerEscaneo() {
     BarcodeScanner.showBackground();
