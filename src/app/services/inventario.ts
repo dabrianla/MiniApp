@@ -38,5 +38,21 @@ export class InventarioService {
     this.productos.push(producto);
     this.guardarAlmacenamiento(); // <--- ¡La magia está aquí!
   }
+
+  // ELIMINAR
+  eliminarProducto(id: string) {
+    this.productos = this.productos.filter(p => p.id !== id);
+    this.guardarAlmacenamiento();
+  }
+
+  // ACTUALIZAR (Solo precio y distribuidor)
+  actualizarProducto(id: string, nuevoPrecio: number, nuevoDistribuidor: string) {
+    const index = this.productos.findIndex(p => p.id === id);
+    if (index !== -1) {
+      this.productos[index].precio = nuevoPrecio;
+      this.productos[index].distribuidor = nuevoDistribuidor;
+      this.guardarAlmacenamiento();
+    }
+  }
   
 }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,7 +8,7 @@ import {
   IonList, IonItem, IonThumbnail, IonLabel,
   IonFab, IonFabButton, IonIcon,
   IonSelect, IonSelectOption,
-  IonButton // <-- NUEVO: Importamos el botón
+  IonButton, AlertController// <-- NUEVO: Importamos el botón
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { add, barcodeOutline } from 'ionicons/icons'; // <-- NUEVO: Ícono de código de barras
@@ -42,7 +42,7 @@ export class ProductosPage {
 
   escaneando: boolean = false; // <-- NUEVO: Controla la cámara
 
-  constructor(public inventarioService: InventarioService) {
+  constructor(public inventarioService: InventarioService, private cdr: ChangeDetectorRef, private alertController: AlertController) {
     addIcons({ add, barcodeOutline }); // <-- Registramos el nuevo ícono
   }
 
@@ -110,9 +110,12 @@ export class ProductosPage {
       const result = await BarcodeScanner.startScan(); 
 
       if (result.hasContent) {
-        // Ponemos el código escaneado en el buscador y filtramos al instante
-        this.textoBusqueda = result.content; 
+        // 3. Forzamos minúsculas por si el código de barras tiene letras
+        this.textoBusqueda = result.content.toLowerCase(); 
         this.aplicarFiltros();
+        
+        // 4. ¡TOCAMOS EL TIMBRE! Le avisamos a Angular que actualice la lista
+        this.cdr.detectChanges(); 
       }
     } catch (error) {
       console.error('Error usando el escáner', error);
@@ -121,10 +124,64 @@ export class ProductosPage {
     }
   }
 
+
   detenerEscaneo() {
     BarcodeScanner.showBackground();
     BarcodeScanner.stopScan();
     document.body.classList.remove('qrscanner');
     this.escaneando = false; 
   }
+
+  async confirmarEliminacion(id: string) {
+  const alert = await this.alertController.create({
+    header: '¿Eliminar producto?',
+    message: 'Esta acción no se puede deshacer.',
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      {
+        text: 'Eliminar',
+        role: 'destructive',
+        handler: () => {
+          this.inventarioService.eliminarProducto(id);
+          this.aplicarFiltros(); // Refresca la lista
+        }
+      }
+    ]
+  });
+  await alert.present();
 }
+
+// FUNCIÓN PARA EDITAR (Precio y Proveedor)
+async abrirEditor(producto: Producto) {
+  const alert = await this.alertController.create({
+    header: 'Editar Producto',
+    inputs: [
+      {
+        name: 'precio',
+        type: 'number',
+        placeholder: 'Precio actual: ' + producto.precio,
+        value: producto.precio
+      },
+      {
+        name: 'distribuidor',
+        type: 'text',
+        placeholder: 'Proveedor',
+        value: producto.distribuidor
+      }
+    ],
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      {
+        text: 'Guardar',
+        handler: (data) => {
+          this.inventarioService.actualizarProducto(producto.id, data.precio, data.distribuidor);
+          this.aplicarFiltros(); // Refresca la lista
+        }
+      }
+    ]
+  });
+  await alert.present();
+}
+
+}
+

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -34,7 +34,8 @@ export class AgregarProductoPage {
 
   constructor(
     private inventarioService: InventarioService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   guardarProducto() {
@@ -65,16 +66,17 @@ export class AgregarProductoPage {
   async escanearCodigo() {
     try {
       await BarcodeScanner.checkPermission({ force: true });
-      
       BarcodeScanner.hideBackground();
       document.body.classList.add('qrscanner');
-      
-      this.escaneando = true; //
+      this.escaneando = true;
 
       const result = await BarcodeScanner.startScan(); 
 
       if (result.hasContent) {
         this.nuevoProducto.codigoBarras = result.content; 
+        
+        // 3. ¡TOCAMOS EL TIMBRE! Para que el número aparezca en el Input al instante
+        this.cdr.detectChanges();
       }
     } catch (error) {
       console.error('Error usando el escáner', error);
@@ -82,7 +84,6 @@ export class AgregarProductoPage {
       this.detenerEscaneo();
     }
   }
-
   ionViewWillLeave() {
     // Si la cámara está encendida al momento de salir, la apagamos forzosamente
     if (this.escaneando) {
