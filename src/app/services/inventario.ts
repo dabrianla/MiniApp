@@ -4,11 +4,11 @@ export interface Producto {
   id: string;
   codigoBarras: string;
   nombre: string;
-  marca: string;
+  marca?: string;
   medida: string;
   stock: number | null; // Puede ser null porque no es obligatorio
   precio: number;
-  distribuidor: string;
+  distribuidor?: string;
   imagen: string;
 }
 

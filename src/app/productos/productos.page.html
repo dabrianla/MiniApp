@@ -1,48 +1,67 @@
-<ion-header>
-  <ion-toolbar color="primary">
+<ion-header *ngIf="!escaneando">
+  <ion-toolbar color="dark">
     <ion-buttons slot="start">
-      <ion-menu-button></ion-menu-button>
+      <ion-menu-button color="secondary"></ion-menu-button>
     </ion-buttons>
-    <ion-title>Inventario</ion-title>
+    <ion-title color="secondary">Inventario</ion-title>
   </ion-toolbar>
-  
-  <ion-toolbar color="primary">
-    <ion-searchbar 
-      placeholder="Buscar producto..." 
-      (ionInput)="buscarProducto($event)"
-      animated="true">
-    </ion-searchbar>
+
+  <ion-toolbar color="dark">
+    <div style="display: flex; align-items: center; padding-right: 10px;">
+      <ion-searchbar placeholder="Buscar nombre o código..." [(ngModel)]="textoBusqueda" (ionInput)="buscarProducto($event)" style="padding-right: 0; flex: 1;"></ion-searchbar>
+      
+      <ion-button fill="clear" color="secondary" (click)="escanearParaBuscar()">
+        <ion-icon slot="icon-only" name="barcode-outline" style="font-size: 28px;"></ion-icon>
+      </ion-button>
+    </div>
+  </ion-toolbar>
+
+  <ion-toolbar color="dark">
+    <div style="display: flex; gap: 10px; padding: 0 15px; margin-bottom: 10px;">
+      <ion-select label="Marca" label-placement="floating" interface="popover" [(ngModel)]="filtroMarca" (ionChange)="cambiarFiltroMarca($event)" style="flex: 1; background: #333; border-radius: 8px;">
+        <ion-select-option value="Todas">Todas</ion-select-option>
+        <ion-select-option *ngFor="let marca of marcasUnicas" [value]="marca">{{ marca }}</ion-select-option>
+      </ion-select>
+
+      <ion-select label="Proveedor" label-placement="floating" interface="popover" [(ngModel)]="filtroDistribuidor" (ionChange)="cambiarFiltroDistribuidor($event)" style="flex: 1; background: #333; border-radius: 8px;">
+        <ion-select-option value="Todos">Todos</ion-select-option>
+        <ion-select-option *ngFor="let dist of distribuidoresUnicos" [value]="dist">{{ dist }}</ion-select-option>
+      </ion-select>
+    </div>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <ion-list>
-    <ion-item *ngFor="let producto of productosFiltrados">
-      
-      <ion-thumbnail slot="start">
-        <img [src]="producto.imagen" alt="Foto de {{ producto.nombre }}" />
-      </ion-thumbnail>
+<ion-content class="ion-padding">
 
-      <ion-label>
-        <h2>{{ producto.nombre }}</h2>
-        <p>
-          {{ producto.medida }} | Stock: 
-          <strong [style.color]="producto.stock !== null && producto.stock < 10 ? 'red' : 'inherit'">
-  {{ producto.stock !== null ? producto.stock : 'Sin definir' }}
-</strong>
-        </p>
-      </ion-label>
+  <div *ngIf="!escaneando">
+    <ion-list>
+      <ion-item *ngFor="let producto of productosFiltrados">
+        <ion-thumbnail slot="start">
+          <img [src]="producto.imagen" alt="{{ producto.nombre }}" />
+        </ion-thumbnail>
+        <ion-label>
+          <h2>{{ producto.nombre }}</h2>
+          <p>Marca: {{ producto.marca || 'N/A' }} | Medida: {{ producto.medida }}</p>
+          <p>Stock: {{ producto.stock }} | Cod: {{ producto.codigoBarras || 'Sin código' }}</p>
+        </ion-label>
+        <ion-label slot="end" class="ion-text-right">
+          <h2>${{ producto.precio }}</h2>
+        </ion-label>
+      </ion-item>
+    </ion-list>
 
-      <div slot="end" class="precio-destacado">
-        ${{ producto.precio }}
-      </div>
-      
-    </ion-item>
-  </ion-list>
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+      <ion-fab-button routerLink="/agregar-producto" color="secondary">
+        <ion-icon name="add" style="color: black;"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+  </div>
 
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button color="secondary" routerLink="/agregar-producto">
-      <ion-icon name="add" style="color: black;"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
+  <div *ngIf="escaneando" class="contenedor-escaner">
+    <div class="cuadro-enfoque"></div>
+    <ion-button color="danger" (click)="detenerEscaneo()" style="margin-top: 40px;">
+      Cancelar Escaneo
+    </ion-button>
+  </div>
+
 </ion-content>
