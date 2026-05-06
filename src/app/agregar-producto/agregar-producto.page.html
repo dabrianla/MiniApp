@@ -21,9 +21,10 @@
       <ion-input 
         label="Código de Barras *" 
         labelPlacement="floating" 
-        [(ngModel)]="nuevoProducto.codigoBarras" 
-        name="codigoBarras" 
-        type="text">
+        [value]="nuevoProducto.codigoBarras" 
+        (ionInput)="actualizarCodigo($event)"
+        type="text"
+        inputmode="numeric">
       </ion-input>
     </ion-item>
 

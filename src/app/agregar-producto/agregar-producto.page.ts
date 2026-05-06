@@ -63,6 +63,11 @@ export class AgregarProductoPage {
     this.router.navigate(['/productos']);
   }
 
+  // AGREGA ESTA NUEVA FUNCIÓN
+  actualizarCodigo(event: any) {
+    this.nuevoProducto.codigoBarras = event.detail.value;
+  }
+
   async escanearCodigo() {
     try {
       await BarcodeScanner.checkPermission({ force: true });
