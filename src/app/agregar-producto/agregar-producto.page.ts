@@ -1,13 +1,15 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { 
   IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, 
-  IonBackButton, IonItem, IonInput, IonButton, IonLabel
+  IonBackButton, IonItem, IonInput, IonButton, IonLabel,IonIcon
 } from '@ionic/angular/standalone';
 import { InventarioService, Producto } from '../services/inventario';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+
 @Component({
   selector: 'app-agregar-producto',
   templateUrl: './agregar-producto.page.html',
@@ -15,13 +17,14 @@ import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
   standalone: true,
   imports: [
     CommonModule, FormsModule, IonContent, IonHeader, IonTitle, 
-    IonToolbar, IonButtons, IonBackButton, IonItem, IonInput, IonButton, IonLabel
+    IonToolbar, IonButtons, IonBackButton, IonItem, IonInput, IonButton, IonLabel,IonIcon
   ]
 })
 export class AgregarProductoPage {
   
   // Objeto temporal ligado al formulario
   nuevoProducto: any = {
+    codigoBarras: '', // <-- Agregamos esto aquí para que Angular lo reconozca
     nombre: '',
     medida: '',
     precio: null,
@@ -35,7 +38,8 @@ export class AgregarProductoPage {
   constructor(
     private inventarioService: InventarioService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone // <-- NgZone inyectado correctamente
   ) {}
 
   guardarProducto() {
@@ -48,14 +52,15 @@ export class AgregarProductoPage {
     // Creamos el producto final
     const productoAguardar: Producto = {
       id: Date.now().toString(), // Generamos un ID único temporal
-      codigoBarras: '0000000000000', // Código de barras genérico por ahora
+      // 👇 AQUÍ ESTABA EL ERROR: Ahora usamos lo que escaneó o escribió el usuario (si está vacío, pone ceros)
+      codigoBarras: this.nuevoProducto.codigoBarras || '0000000000000', 
       nombre: this.nuevoProducto.nombre,
-      marca: this.nuevoProducto.marca || 'Marca Genérica', // Podríamos agregar un campo para esto en el futuro
+      marca: this.nuevoProducto.marca || 'Marca Genérica', 
       medida: this.nuevoProducto.medida,
       precio: this.nuevoProducto.precio,
-      stock: this.nuevoProducto.stock || 0, // Si no pone stock, asume 0
+      stock: this.nuevoProducto.stock || 0, 
       imagen: this.nuevoProducto.imagen,
-      distribuidor: this.nuevoProducto.distribuidor || 'Distribuidor Genérico' // Podríamos agregar un campo para esto en el futuro
+      distribuidor: this.nuevoProducto.distribuidor || 'Distribuidor Genérico' 
     };
 
     // Guardamos y volvemos a la lista
@@ -63,7 +68,7 @@ export class AgregarProductoPage {
     this.router.navigate(['/productos']);
   }
 
-  // AGREGA ESTA NUEVA FUNCIÓN
+  // Actualizar código manual
   actualizarCodigo(event: any) {
     this.nuevoProducto.codigoBarras = event.detail.value;
   }
@@ -78,11 +83,10 @@ export class AgregarProductoPage {
       const result = await BarcodeScanner.startScan(); 
 
       if (result.hasContent) {
-        // Convertimos a Texto y quitamos espacios basura
-        this.nuevoProducto.codigoBarras = String(result.content).trim(); 
-        
-        // Tocamos el timbre de Angular
-        this.cdr.detectChanges();
+        // 👇 APLICAMOS NGZONE: Obligamos a Angular a atrapar el escaneo al instante
+        this.ngZone.run(() => {
+          this.nuevoProducto.codigoBarras = String(result.content).trim(); 
+        });
       }
     } catch (error) {
       console.error('Error usando el escáner', error);
@@ -90,6 +94,7 @@ export class AgregarProductoPage {
       this.detenerEscaneo();
     }
   }
+
   ionViewWillLeave() {
     // Si la cámara está encendida al momento de salir, la apagamos forzosamente
     if (this.escaneando) {
@@ -97,12 +102,12 @@ export class AgregarProductoPage {
     }
   }
 
-  // 4. NUEVA FUNCIÓN PARA CANCELAR/LIMPIAR EL ESCÁNER
+  // NUEVA FUNCIÓN PARA CANCELAR/LIMPIAR EL ESCÁNER
   detenerEscaneo() {
     BarcodeScanner.showBackground();
     BarcodeScanner.stopScan();
     document.body.classList.remove('qrscanner');
-    this.escaneando = false; //
+    this.escaneando = false; 
   }
 
   // Función temporal para la imagen
@@ -110,6 +115,26 @@ export class AgregarProductoPage {
     const file = event.target.files[0];
     if (file) {
       this.nuevoProducto.imagen = URL.createObjectURL(file);
+    }
+  }
+
+  async tomarFoto() {
+    try {
+      const foto = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Camera // Esto fuerza a que se abra la cámara directamente
+      });
+
+      if (foto.webPath) {
+        // Usamos NgZone igual que con el escáner para que Angular actualice la imagen de inmediato
+        this.ngZone.run(() => {
+          this.nuevoProducto.imagen = foto.webPath;
+        });
+      }
+    } catch (error) {
+      console.error('Error al tomar la foto o foto cancelada', error);
     }
   }
 

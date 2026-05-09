@@ -21,10 +21,9 @@
       <ion-input 
         label="Código de Barras *" 
         labelPlacement="floating" 
-        [value]="nuevoProducto.codigoBarras" 
-        (ionInput)="actualizarCodigo($event)"
-        type="text"
-        inputmode="numeric">
+        [(ngModel)]="nuevoProducto.codigoBarras" 
+        name="codigoBarras" 
+        type="text">
       </ion-input>
     </ion-item>
 
@@ -52,9 +51,25 @@
       <ion-input label="Distribuidor" labelPlacement="floating" [(ngModel)]="nuevoProducto.distribuidor" type="text"></ion-input>
     </ion-item>
 
-    <ion-item>
-      <ion-label position="stacked">Foto (Opcional)</ion-label>
-      <input type="file" accept="image/*" (change)="cargarImagen($event)" style="margin-top: 10px;" />
+   <ion-item>
+      <div style="width: 100%; padding-top: 10px; padding-bottom: 10px;">
+        <ion-label style="margin-bottom: 10px; display: block; color: gray;">Imagen del Producto</ion-label>
+        
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+          
+          <ion-button (click)="tomarFoto()" color="primary" fill="outline">
+            <ion-icon slot="start" name="camera-outline"></ion-icon>
+            Cámara
+          </ion-button>
+
+          <input 
+            type="file" 
+            accept="image/*" 
+            (change)="cargarImagen($event)" 
+            style="font-size: 14px;"
+          />
+        </div>
+      </div>
     </ion-item>
 
     <ion-button expand="block" color="secondary" style="margin-top: 20px; color: black;" (click)="guardarProducto()">
