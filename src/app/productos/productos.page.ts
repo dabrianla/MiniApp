@@ -9,12 +9,13 @@ import {
   IonFab, IonFabButton, IonIcon,
   IonSelect, IonSelectOption,
   IonButton, AlertController,
-  IonItemSliding, IonItemOptions, IonItemOption// <-- NUEVO: Importamos el botón
+  IonItemSliding, IonItemOptions, IonItemOption,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { add, barcodeOutline } from 'ionicons/icons'; // <-- NUEVO: Ícono de código de barras
+import { add, barcodeOutline, createOutline, trashOutline } from 'ionicons/icons'; // <-- NUEVO: Ícono de código de barras
 import { InventarioService, Producto } from '../services/inventario';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner'; // <-- NUEVO: El escáner
+
 
 @Component({
   selector: 'app-productos',
@@ -37,14 +38,17 @@ export class ProductosPage {
   textoBusqueda: string = '';
   filtroMarca: string = 'Todas';
   filtroDistribuidor: string = 'Todos';
+  filtroCategoria: string = 'Todas';
+  categoriasUnicas: string[] = [];
 
   marcasUnicas: string[] = [];
   distribuidoresUnicos: string[] = [];
+  
 
   escaneando: boolean = false; // <-- NUEVO: Controla la cámara
 
   constructor(public inventarioService: InventarioService, private cdr: ChangeDetectorRef, private alertController: AlertController) {
-    addIcons({ add, barcodeOutline }); // <-- Registramos el nuevo ícono
+    addIcons({ add, barcodeOutline, createOutline, trashOutline }); // <-- Registramos los nuevos íconos
   }
 
   ionViewWillEnter() {
@@ -59,11 +63,22 @@ export class ProductosPage {
   }
 
   cargarFiltrosYProductos() {
-    const todos = this.inventarioService.productos;
-    this.marcasUnicas = [...new Set(todos.map(p => p.marca).filter(m => m) as string[])];
-    this.distribuidoresUnicos = [...new Set(todos.map(p => p.distribuidor).filter(d => d) as string[])];
-    this.aplicarFiltros();
-  }
+  const todos = this.inventarioService.productos;
+  
+  // Extraemos las categorías únicas
+  this.categoriasUnicas = [...new Set(todos.map(p => p.categoria).filter(c => c) as string[])];
+  
+  // Mantenemos los otros filtros que ya tenías
+  this.marcasUnicas = [...new Set(todos.map(p => p.marca).filter(m => m) as string[])];
+  this.distribuidoresUnicos = [...new Set(todos.map(p => p.distribuidor).filter(d => d) as string[])];
+  
+  this.aplicarFiltros();
+}
+
+  cambiarFiltroCategoria(event: any) {
+  this.filtroCategoria = event.detail.value;
+  this.aplicarFiltros();
+}
 
   buscarProducto(event: any) {
     this.textoBusqueda = event.target.value.toLowerCase();
@@ -81,31 +96,33 @@ export class ProductosPage {
   }
 
   aplicarFiltros() {
-    let resultado = this.inventarioService.productos;
+  let resultado = this.inventarioService.productos;
 
-    if (this.filtroMarca !== 'Todas') {
-      resultado = resultado.filter(p => p.marca === this.filtroMarca);
-    }
-    if (this.filtroDistribuidor !== 'Todos') {
-      resultado = resultado.filter(p => p.distribuidor === this.filtroDistribuidor);
-    }
-    
-    // 👇 BUSCADOR MEJORADO
-    if (this.textoBusqueda && this.textoBusqueda.trim() !== '') {
-      // Limpiamos espacios basura al inicio y al final
-      const termino = this.textoBusqueda.trim().toLowerCase(); 
-      
-      resultado = resultado.filter(producto => {
-        // Obligamos a que el código y nombre se lean como Texto sí o sí
-        const nombre = producto.nombre ? String(producto.nombre).toLowerCase() : '';
-        const codigo = producto.codigoBarras ? String(producto.codigoBarras).toLowerCase() : '';
-        
-        return nombre.includes(termino) || codigo.includes(termino);
-      });
-    }
-
-    this.productosFiltrados = resultado;
+  // Filtro por Categoría (NUEVO)
+  if (this.filtroCategoria !== 'Todas') {
+    resultado = resultado.filter(p => p.categoria === this.filtroCategoria);
   }
+
+  // Filtros existentes
+  if (this.filtroMarca !== 'Todas') {
+    resultado = resultado.filter(p => p.marca === this.filtroMarca);
+  }
+  if (this.filtroDistribuidor !== 'Todos') {
+    resultado = resultado.filter(p => p.distribuidor === this.filtroDistribuidor);
+  }
+  
+  // Buscador por texto/código
+  if (this.textoBusqueda && this.textoBusqueda.trim() !== '') {
+    const termino = this.textoBusqueda.trim().toLowerCase(); 
+    resultado = resultado.filter(producto => {
+      const nombre = producto.nombre ? String(producto.nombre).toLowerCase() : '';
+      const codigo = producto.codigoBarras ? String(producto.codigoBarras).toLowerCase() : '';
+      return nombre.includes(termino) || codigo.includes(termino);
+    });
+  }
+
+  this.productosFiltrados = resultado;
+}
 
   // --- LÓGICA DE LA CÁMARA ---
   async escanearParaBuscar() {

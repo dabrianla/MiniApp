@@ -1,0 +1,40 @@
+.login-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  max-width: 400px; /* Para que en tablets no se vea estirado */
+  margin: 0 auto;
+}
+
+.logo-icon {
+  font-size: 100px;
+  margin-bottom: 10px;
+}
+
+.app-title {
+  color: white;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+.login-card {
+  width: 100%;
+  border-radius: 15px;
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.5);
+}
+
+.login-btn {
+  margin-top: 30px;
+  height: 50px;
+  font-weight: bold;
+}

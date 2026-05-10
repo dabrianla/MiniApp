@@ -1,0 +1,41 @@
+<ion-content color="dark" class="ion-padding ion-text-center login-content">
+  
+  <div class="login-container">
+    <ion-icon name="person-circle-outline" class="logo-icon" color="secondary"></ion-icon>
+    <h1 class="app-title">Mi Inventario</h1>
+
+    <ion-card color="light" class="login-card">
+      <ion-card-header>
+        <ion-card-title>Iniciar Sesión</ion-card-title>
+      </ion-card-header>
+
+      <ion-card-content>
+        <ion-item lines="full" color="light">
+          <ion-input 
+            type="email" 
+            label="Correo electrónico" 
+            labelPlacement="floating" 
+            [(ngModel)]="email" 
+            placeholder="ejemplo@negocio.com">
+          </ion-input>
+        </ion-item>
+
+        <ion-item lines="full" color="light" class="ion-margin-top">
+          <ion-input 
+            type="password" 
+            label="Contraseña" 
+            labelPlacement="floating" 
+            [(ngModel)]="password" 
+            placeholder="********">
+          </ion-input>
+        </ion-item>
+
+        <ion-button expand="block" color="secondary" class="ion-margin-top login-btn" (click)="iniciarSesion()">
+          <ion-icon slot="start" name="log-in-outline"></ion-icon>
+          Entrar
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+</ion-content>

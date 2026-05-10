@@ -6,11 +6,22 @@ import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
+import { getAuth, provideAuth } from '@angular/fire/auth'; // <-- NUEVO: Importamos el módulo de Auth
 
 bootstrapApplication(AppComponent, {
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     provideIonicAngular(),
-    provideRouter(routes, withPreloading(PreloadAllModules)), provideFirebaseApp(() => initializeApp({ projectId: "miniapp-inventario", appId: "1:633727289203:web:01c607e63eeef7b8412706", storageBucket: "miniapp-inventario.firebasestorage.app", apiKey: "AIzaSyCmfN1TZ5m10zxYiX5TyqTM7E3rfRoeihw", authDomain: "miniapp-inventario.firebaseapp.com", messagingSenderId: "633727289203", projectNumber: "633727289203", version: "2" })), provideFirestore(() => getFirestore()),
+    provideRouter(routes, withPreloading(PreloadAllModules)), 
+    provideFirebaseApp(() => initializeApp({ 
+      projectId: "miniapp-inventario", 
+      appId: "1:633727289203:web:01c607e63eeef7b8412706", 
+      storageBucket: "miniapp-inventario.firebasestorage.app", 
+      apiKey: "AIzaSyCmfN1TZ5m10zxYiX5TyqTM7E3rfRoeihw", 
+      authDomain: "miniapp-inventario.firebaseapp.com", 
+      messagingSenderId: "633727289203" 
+    })), 
+    provideFirestore(() => getFirestore()),
+    provideAuth(() => getAuth()), // <-- NUEVO: Encendemos la autenticación
   ],
 });

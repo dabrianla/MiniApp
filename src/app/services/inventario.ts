@@ -1,12 +1,16 @@
 import { Injectable } from '@angular/core';
+import { Firestore, collection, addDoc, collectionData, doc, updateDoc, deleteDoc } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface Producto {
   id: string;
   codigoBarras: string;
   nombre: string;
   marca?: string;
+  categoria: string;
   medida: string;
-  stock: number | null; // Puede ser null porque no es obligatorio
+  stock: number | null;
   precio: number;
   distribuidor?: string;
   imagen: string;
@@ -16,43 +20,39 @@ export interface Producto {
   providedIn: 'root'
 })
 export class InventarioService {
+  // Lista que usaremos en la app
   public productos: Producto[] = [];
 
-  constructor() {
-    this.cargarAlmacenamiento();
+  constructor(private firestore: Firestore) {
+    this.obtenerProductos();
   }
 
-  cargarAlmacenamiento() {
-    const datosGuardados = localStorage.getItem('miInventario');
-    if (datosGuardados) {
-      this.productos = JSON.parse(datosGuardados); // Convertimos el texto de vuelta a Lista
-    }
+  // LEER: Se conecta a la nube y se queda escuchando cambios
+  obtenerProductos() {
+    const productosRef = collection(this.firestore, 'productos');
+    collectionData(productosRef, { idField: 'id' }).subscribe((res: any) => {
+      this.productos = res;
+    });
   }
 
-  guardarAlmacenamiento() {
-    localStorage.setItem('miInventario', JSON.stringify(this.productos));
+  // GUARDAR: Envía el producto a Google
+  async agregarProducto(producto: Producto) {
+    const productosRef = collection(this.firestore, 'productos');
+    return addDoc(productosRef, producto);
   }
 
-  // 3. AGREGAR PRODUCTO (Y guardar automáticamente)
-  agregarProducto(producto: Producto) {
-    this.productos.push(producto);
-    this.guardarAlmacenamiento(); // <--- ¡La magia está aquí!
+  // EDITAR: Actualiza en la nube
+  async actualizarProducto(id: string, nuevoPrecio: number, nuevoDist: string) {
+    const productoDocRef = doc(this.firestore, `productos/${id}`);
+    return updateDoc(productoDocRef, { 
+      precio: nuevoPrecio, 
+      distribuidor: nuevoDist 
+    });
   }
 
-  // ELIMINAR
-  eliminarProducto(id: string) {
-    this.productos = this.productos.filter(p => p.id !== id);
-    this.guardarAlmacenamiento();
+  // ELIMINAR: Borra de la nube
+  async eliminarProducto(id: string) {
+    const productoDocRef = doc(this.firestore, `productos/${id}`);
+    return deleteDoc(productoDocRef);
   }
-
-  // ACTUALIZAR (Solo precio y distribuidor)
-  actualizarProducto(id: string, nuevoPrecio: number, nuevoDistribuidor: string) {
-    const index = this.productos.findIndex(p => p.id === id);
-    if (index !== -1) {
-      this.productos[index].precio = nuevoPrecio;
-      this.productos[index].distribuidor = nuevoDistribuidor;
-      this.guardarAlmacenamiento();
-    }
-  }
-  
 }

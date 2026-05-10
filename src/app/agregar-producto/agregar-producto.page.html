@@ -1,4 +1,4 @@
-<ion-header *ngIf="!escaneando">
+<ion-header [translucent]="true" *ngIf="!escaneando">
   <ion-toolbar color="dark">
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/productos" color="secondary"></ion-back-button>
@@ -7,78 +7,88 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
-
-  <div *ngIf="!escaneando">
+<ion-content [fullscreen]="true" [class.scanner-active]="escaneando">
+  
+  <div *ngIf="!escaneando" class="ion-padding">
     
-    <p *ngIf="mensajeError" style="color: red;">{{ mensajeError }}</p>
+    <div style="text-align: center; margin-bottom: 20px;" (click)="tomarFoto()">
+      <img [src]="nuevoProducto.imagen" style="width: 150px; height: 150px; object-fit: cover; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);" />
+      <p style="color: gray; margin-top: 5px;">
+        <ion-icon name="camera-outline" style="vertical-align: middle;"></ion-icon> Tocar para cambiar foto
+      </p>
+    </div>
 
-    <ion-button expand="block" color="secondary" (click)="escanearCodigo()" style="color: black; margin-bottom: 15px;">
-      <strong>Escanear Código</strong>
+    <ion-item lines="stacked">
+      <ion-label position="stacked">Código de Barras (Opcional)</ion-label>
+      <ion-input [(ngModel)]="nuevoProducto.codigoBarras" placeholder="Escanea o escribe"></ion-input>
+      <ion-button slot="end" fill="clear" (click)="escanearCodigo()">
+        <ion-icon name="barcode-outline"></ion-icon>
+      </ion-button>
+    </ion-item>
+
+    <ion-item lines="stacked">
+      <ion-label position="stacked">Nombre del Producto</ion-label>
+      <ion-input [(ngModel)]="nuevoProducto.nombre" placeholder="Ej: Coca Cola 2L"></ion-input>
+    </ion-item>
+
+    <ion-item lines="stacked">
+  <ion-label position="stacked">Marca</ion-label>
+  <ion-input [(ngModel)]="nuevoProducto.marca" placeholder="Ej: Nestlé, Soprole..."></ion-input>
+</ion-item>
+
+<ion-item lines="stacked">
+  <ion-label position="stacked">Proveedor / Distribuidor</ion-label>
+  <ion-input [(ngModel)]="nuevoProducto.distribuidor" placeholder="Ej: Distribuidora Norte"></ion-input>
+</ion-item>
+
+    <ion-item lines="stacked">
+      <ion-label position="stacked">Categoría</ion-label>
+      <ion-select [(ngModel)]="nuevoProducto.categoria" interface="popover">
+        <ion-select-option value="Abarrotes">Abarrotes</ion-select-option>
+        <ion-select-option value="Botillería">Botillería</ion-select-option>
+        <ion-select-option value="Verdulería">Verdulería</ion-select-option>
+        <ion-select-option value="Panadería">Panadería</ion-select-option>
+        <ion-select-option value="Otros">Otros</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <ion-item lines="stacked">
+      <ion-label position="stacked">Se vende por:</ion-label>
+      <ion-select [(ngModel)]="nuevoProducto.medida">
+        <ion-select-option value="Unidad">Unidad</ion-select-option>
+        <ion-select-option value="Kg">Kilo (Kg)</ion-select-option>
+        <ion-select-option value="Pack">Pack</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <ion-item lines="stacked">
+      <ion-label position="stacked">Precio de Venta ($)</ion-label>
+      <ion-input type="number" [(ngModel)]="nuevoProducto.precio"></ion-input>
+    </ion-item>
+
+    <ion-item lines="stacked">
+      <ion-label position="stacked">Stock Actual (Opcional)</ion-label>
+      <ion-input type="number" [(ngModel)]="nuevoProducto.stock"></ion-input>
+    </ion-item>
+
+    <ion-button expand="block" class="ion-margin-top" (click)="guardarProducto()">
+      Guardar en Inventario
     </ion-button>
+  </div>
 
-    <ion-item>
-      <ion-input 
-        label="Código de Barras *" 
-        labelPlacement="floating" 
-        [(ngModel)]="nuevoProducto.codigoBarras" 
-        name="codigoBarras" 
-        type="text">
-      </ion-input>
-    </ion-item>
+  <div *ngIf="escaneando" class="scanner-overlay">
+    
+    <h2 class="scanner-text">Apunta al código de barras</h2>
+    
+    <div class="scanner-box">
+      <div class="laser"></div>
+    </div>
 
-    <ion-item>
-      <ion-input label="Nombre del Producto *" labelPlacement="floating" [(ngModel)]="nuevoProducto.nombre" type="text"></ion-input>
-    </ion-item>
-
-    <ion-item>
-      <ion-input label="Marca" labelPlacement="floating" [(ngModel)]="nuevoProducto.marca" type="text"></ion-input>
-    </ion-item>
-
-    <ion-item>
-      <ion-input label="Gramaje / Litros *" labelPlacement="floating" [(ngModel)]="nuevoProducto.medida" type="text"></ion-input>
-    </ion-item>
-
-    <ion-item>
-      <ion-input label="Precio ($) *" labelPlacement="floating" [(ngModel)]="nuevoProducto.precio" type="number"></ion-input>
-    </ion-item>
-
-    <ion-item>
-      <ion-input label="Stock (Opcional)" labelPlacement="floating" [(ngModel)]="nuevoProducto.stock" type="number"></ion-input>
-    </ion-item>
-
-    <ion-item>
-      <ion-input label="Distribuidor" labelPlacement="floating" [(ngModel)]="nuevoProducto.distribuidor" type="text"></ion-input>
-    </ion-item>
-
-   <ion-item>
-      <div style="width: 100%; padding-top: 10px; padding-bottom: 10px;">
-        <ion-label style="margin-bottom: 10px; display: block; color: gray;">Imagen del Producto</ion-label>
-        
-        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-          
-          <ion-button (click)="tomarFoto()" color="primary" fill="outline">
-            <ion-icon slot="start" name="camera-outline"></ion-icon>
-            Cámara
-          </ion-button>
-
-          <input 
-            type="file" 
-            accept="image/*" 
-            (change)="cargarImagen($event)" 
-            style="font-size: 14px;"
-          />
-        </div>
-      </div>
-    </ion-item>
-
-    <ion-button expand="block" color="secondary" style="margin-top: 20px; color: black;" (click)="guardarProducto()">
-      <strong>Guardar Producto</strong>
-    </ion-button>
-
-  </div> <div *ngIf="escaneando" class="contenedor-escaner">
-    <div class="cuadro-enfoque"></div>
-    <ion-button color="danger" (click)="detenerEscaneo()" style="margin-top: 40px;">
+    <ion-button (click)="detenerEscaneo()" color="danger" class="btn-cancelar">
+      <ion-icon slot="start" name="close-circle-outline"></ion-icon>
       Cancelar Escaneo
     </ion-button>
-  </div> </ion-content>
+
+  </div>
+
+</ion-content>
