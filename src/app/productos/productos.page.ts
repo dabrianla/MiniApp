@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, inject } from '@angular/core'; // <-- Añadí OnInit aquí
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -12,10 +12,10 @@ import {
   IonItemSliding, IonItemOptions, IonItemOption,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { add, barcodeOutline, createOutline, trashOutline } from 'ionicons/icons'; // <-- NUEVO: Ícono de código de barras
+import { add, barcodeOutline, createOutline, trashOutline } from 'ionicons/icons';
 import { InventarioService, Producto } from '../services/inventario';
-import { BarcodeScanner } from '@capacitor-community/barcode-scanner'; // <-- NUEVO: El escáner
-
+import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
+import { AuthService } from '../services/auth';
 
 @Component({
   selector: 'app-productos',
@@ -29,56 +29,78 @@ import { BarcodeScanner } from '@capacitor-community/barcode-scanner'; // <-- NU
     IonList, IonItem, IonThumbnail, IonLabel,
     IonFab, IonFabButton, IonIcon,
     IonSelect, IonSelectOption,
-    IonButton, IonItemSliding, IonItemOptions, IonItemOption // <-- NUEVO: Lo agregamos aquí
+    IonButton, IonItemSliding, IonItemOptions, IonItemOption
   ]
 })
-export class ProductosPage {
+export class ProductosPage implements OnInit { // <-- Agregué "implements OnInit"
   productosFiltrados: Producto[] = [];
-  
+  public authService = inject(AuthService);
   textoBusqueda: string = '';
   filtroMarca: string = 'Todas';
   filtroDistribuidor: string = 'Todos';
   filtroCategoria: string = 'Todas';
   categoriasUnicas: string[] = [];
-
   marcasUnicas: string[] = [];
   distribuidoresUnicos: string[] = [];
-  
 
-  escaneando: boolean = false; // <-- NUEVO: Controla la cámara
+  escaneando: boolean = false;
 
-  constructor(public inventarioService: InventarioService, private cdr: ChangeDetectorRef, private alertController: AlertController) {
-    addIcons({ add, barcodeOutline, createOutline, trashOutline }); // <-- Registramos los nuevos íconos
+  constructor(
+    public inventarioService: InventarioService, 
+    private cdr: ChangeDetectorRef, 
+    private alertController: AlertController
+  ) {
+    addIcons({ add, barcodeOutline, createOutline, trashOutline });
+  }
+
+  // 🟢 NUEVO: Esto "escucha" a Firebase y actualiza la lista sola y rápido
+  ngOnInit() {
+    this.inventarioService.productos$.subscribe((productosNuevos) => {
+      if (productosNuevos.length > 0) {
+        this.cargarFiltrosYProductos();
+      }
+    });
   }
 
   ionViewWillEnter() {
-    this.cargarFiltrosYProductos();
+    this.aplicarFiltros();
   }
 
-  // Si salimos de la página y la cámara está prendida, la apagamos
   ionViewWillLeave() {
     if (this.escaneando) {
       this.detenerEscaneo();
     }
   }
 
+  // 🟢 LA FUNCIÓN QUE SE HABÍA BORRADO
+  async abrirDetalle(producto: any) {
+    const alert = await this.alertController.create({
+      header: producto.nombre,
+      subHeader: `Precio: $${producto.precio}`,
+      message: `
+        <strong>Stock:</strong> ${producto.stock || 0} <br><br>
+        <strong>Código:</strong> ${producto.codigoBarras || 'N/A'} <br>
+        <strong>Categoría:</strong> ${producto.categoria || 'Todas'} <br>
+        <strong>Marca:</strong> ${producto.marca || 'N/A'} <br>
+        <strong>Proveedor:</strong> ${producto.distribuidor || 'N/A'}
+      `,
+      buttons: ['Cerrar']
+    });
+    await alert.present();
+  }
+
   cargarFiltrosYProductos() {
-  const todos = this.inventarioService.productos;
-  
-  // Extraemos las categorías únicas
-  this.categoriasUnicas = [...new Set(todos.map(p => p.categoria).filter(c => c) as string[])];
-  
-  // Mantenemos los otros filtros que ya tenías
-  this.marcasUnicas = [...new Set(todos.map(p => p.marca).filter(m => m) as string[])];
-  this.distribuidoresUnicos = [...new Set(todos.map(p => p.distribuidor).filter(d => d) as string[])];
-  
-  this.aplicarFiltros();
-}
+    const todos = this.inventarioService.productos;
+    this.categoriasUnicas = [...new Set(todos.map(p => p.categoria).filter(c => c) as string[])];
+    this.marcasUnicas = [...new Set(todos.map(p => p.marca).filter(m => m) as string[])];
+    this.distribuidoresUnicos = [...new Set(todos.map(p => p.distribuidor).filter(d => d) as string[])];
+    this.aplicarFiltros();
+  }
 
   cambiarFiltroCategoria(event: any) {
-  this.filtroCategoria = event.detail.value;
-  this.aplicarFiltros();
-}
+    this.filtroCategoria = event.detail.value;
+    this.aplicarFiltros();
+  }
 
   buscarProducto(event: any) {
     this.textoBusqueda = event.target.value.toLowerCase();
@@ -96,33 +118,30 @@ export class ProductosPage {
   }
 
   aplicarFiltros() {
-  let resultado = this.inventarioService.productos;
+    let resultado = this.inventarioService.productos;
 
-  // Filtro por Categoría (NUEVO)
-  if (this.filtroCategoria !== 'Todas') {
-    resultado = resultado.filter(p => p.categoria === this.filtroCategoria);
-  }
+    if (this.filtroCategoria !== 'Todas') {
+      resultado = resultado.filter(p => p.categoria === this.filtroCategoria);
+    }
+    if (this.filtroMarca !== 'Todas') {
+      resultado = resultado.filter(p => p.marca === this.filtroMarca);
+    }
+    if (this.filtroDistribuidor !== 'Todos') {
+      resultado = resultado.filter(p => p.distribuidor === this.filtroDistribuidor);
+    }
+    
+    if (this.textoBusqueda && this.textoBusqueda.trim() !== '') {
+      const termino = this.textoBusqueda.trim().toLowerCase(); 
+      resultado = resultado.filter(producto => {
+        const nombre = producto.nombre ? String(producto.nombre).toLowerCase() : '';
+        const codigo = producto.codigoBarras ? String(producto.codigoBarras).toLowerCase() : '';
+        return nombre.includes(termino) || codigo.includes(termino);
+      });
+    }
 
-  // Filtros existentes
-  if (this.filtroMarca !== 'Todas') {
-    resultado = resultado.filter(p => p.marca === this.filtroMarca);
+    this.productosFiltrados = resultado;
+    this.cdr.detectChanges(); // Aseguramos que Angular refresque la vista
   }
-  if (this.filtroDistribuidor !== 'Todos') {
-    resultado = resultado.filter(p => p.distribuidor === this.filtroDistribuidor);
-  }
-  
-  // Buscador por texto/código
-  if (this.textoBusqueda && this.textoBusqueda.trim() !== '') {
-    const termino = this.textoBusqueda.trim().toLowerCase(); 
-    resultado = resultado.filter(producto => {
-      const nombre = producto.nombre ? String(producto.nombre).toLowerCase() : '';
-      const codigo = producto.codigoBarras ? String(producto.codigoBarras).toLowerCase() : '';
-      return nombre.includes(termino) || codigo.includes(termino);
-    });
-  }
-
-  this.productosFiltrados = resultado;
-}
 
   // --- LÓGICA DE LA CÁMARA ---
   async escanearParaBuscar() {
@@ -135,10 +154,8 @@ export class ProductosPage {
       const result = await BarcodeScanner.startScan(); 
 
       if (result.hasContent) {
-        // 👇 Le agregamos .trim() aquí para limpiar la lectura
         this.textoBusqueda = result.content.trim(); 
         this.aplicarFiltros();
-        this.cdr.detectChanges(); 
       }
     } catch (error) {
       console.error('Error usando el escáner', error);
@@ -155,55 +172,50 @@ export class ProductosPage {
   }
 
   async confirmarEliminacion(id: string) {
-  const alert = await this.alertController.create({
-    header: '¿Eliminar producto?',
-    message: 'Esta acción no se puede deshacer.',
-    buttons: [
-      { text: 'Cancelar', role: 'cancel' },
-      {
-        text: 'Eliminar',
-        role: 'destructive',
-        handler: () => {
-          this.inventarioService.eliminarProducto(id);
-          this.aplicarFiltros(); // Refresca la lista
+    const alert = await this.alertController.create({
+      header: '¿Eliminar producto?',
+      message: 'Esta acción no se puede deshacer.',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: () => {
+            this.inventarioService.eliminarProducto(id);
+          }
         }
-      }
-    ]
-  });
-  await alert.present();
-}
+      ]
+    });
+    await alert.present();
+  }
 
-// FUNCIÓN PARA EDITAR (Precio y Proveedor)
-async abrirEditor(producto: Producto) {
-  const alert = await this.alertController.create({
-    header: 'Editar Producto',
-    inputs: [
-      {
-        name: 'precio',
-        type: 'number',
-        placeholder: 'Precio actual: ' + producto.precio,
-        value: producto.precio
-      },
-      {
-        name: 'distribuidor',
-        type: 'text',
-        placeholder: 'Proveedor',
-        value: producto.distribuidor
-      }
-    ],
-    buttons: [
-      { text: 'Cancelar', role: 'cancel' },
-      {
-        text: 'Guardar',
-        handler: (data) => {
-          this.inventarioService.actualizarProducto(producto.id, data.precio, data.distribuidor);
-          this.aplicarFiltros(); // Refresca la lista
+  async abrirEditor(producto: Producto) {
+    const alert = await this.alertController.create({
+      header: 'Editar Producto',
+      inputs: [
+        {
+          name: 'precio',
+          type: 'number',
+          placeholder: 'Precio actual: ' + producto.precio,
+          value: producto.precio
+        },
+        {
+          name: 'distribuidor',
+          type: 'text',
+          placeholder: 'Proveedor',
+          value: producto.distribuidor
         }
-      }
-    ]
-  });
-  await alert.present();
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Guardar',
+          handler: (data) => {
+            this.inventarioService.actualizarProducto(producto.id, data.precio, data.distribuidor);
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
 }
-
-}
-

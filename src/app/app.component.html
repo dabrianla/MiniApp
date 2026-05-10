@@ -4,7 +4,11 @@
       <ion-content>
         <ion-list id="inbox-list">
           <ion-list-header>ROSA SPA</ion-list-header>
-          <ion-note>Botilleria</ion-note>
+          <ion-note>Botillería</ion-note>
+
+          <ion-note *ngIf="authService.userData" style="color: var(--ion-color-secondary); font-weight: bold; margin-top: 5px;">
+            Conectado como: {{ authService.userData.rol | uppercase }}
+          </ion-note>
 
           @for (p of appPages; track p; let i = $index) {
             <ion-menu-toggle auto-hide="false">
@@ -14,8 +18,22 @@
               </ion-item>
             </ion-menu-toggle>
           }
-        </ion-list>
 
+          <ion-menu-toggle auto-hide="false" *ngIf="!authService.userData">
+            <ion-item routerDirection="root" routerLink="/login" lines="none" detail="false" routerLinkActive="selected">
+              <ion-icon aria-hidden="true" slot="start" ios="lock-closed-outline" md="lock-closed-sharp"></ion-icon>
+              <ion-label>Acceso Admin</ion-label>
+            </ion-item>
+          </ion-menu-toggle>
+
+          <ion-menu-toggle auto-hide="false" *ngIf="authService.userData">
+            <ion-item button (click)="cerrarSesion()" lines="none" detail="false">
+              <ion-icon aria-hidden="true" slot="start" ios="log-out-outline" md="log-out-sharp" color="danger"></ion-icon>
+              <ion-label color="danger">Cerrar Sesión</ion-label>
+            </ion-item>
+          </ion-menu-toggle>
+
+        </ion-list>
       </ion-content>
     </ion-menu>
     <ion-router-outlet id="main-content"></ion-router-outlet>

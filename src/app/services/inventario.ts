@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Firestore, collection, addDoc, collectionData, doc, updateDoc, deleteDoc } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs'; // <-- ESTO ES VITAL PARA LA ACTUALIZACIÓN AUTOMÁTICA
 
 export interface Producto {
   id: string;
@@ -20,28 +19,33 @@ export interface Producto {
   providedIn: 'root'
 })
 export class InventarioService {
-  // Lista que usaremos en la app
   public productos: Producto[] = [];
+
+  // 🟢 AQUÍ ESTÁ LA VARIABLE QUE FALTABA: El "canal de noticias"
+  private productosSubject = new BehaviorSubject<Producto[]>([]);
+  public productos$ = this.productosSubject.asObservable();
 
   constructor(private firestore: Firestore) {
     this.obtenerProductos();
   }
 
-  // LEER: Se conecta a la nube y se queda escuchando cambios
+  // LEER: Se conecta a la nube y avisa cuando hay datos
   obtenerProductos() {
     const productosRef = collection(this.firestore, 'productos');
     collectionData(productosRef, { idField: 'id' }).subscribe((res: any) => {
       this.productos = res;
+      // 🟢 Avisamos a toda la app que llegaron los productos
+      this.productosSubject.next(res);
     });
   }
 
-  // GUARDAR: Envía el producto a Google
+  // GUARDAR
   async agregarProducto(producto: Producto) {
     const productosRef = collection(this.firestore, 'productos');
     return addDoc(productosRef, producto);
   }
 
-  // EDITAR: Actualiza en la nube
+  // EDITAR
   async actualizarProducto(id: string, nuevoPrecio: number, nuevoDist: string) {
     const productoDocRef = doc(this.firestore, `productos/${id}`);
     return updateDoc(productoDocRef, { 
@@ -50,7 +54,7 @@ export class InventarioService {
     });
   }
 
-  // ELIMINAR: Borra de la nube
+  // ELIMINAR
   async eliminarProducto(id: string) {
     const productoDocRef = doc(this.firestore, `productos/${id}`);
     return deleteDoc(productoDocRef);
