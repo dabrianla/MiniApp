@@ -46,3 +46,8 @@
   z-index: 10;
   font-weight: bold;
 }
+
+ion-content {
+  /* Crea un espacio invisible al final de la lista para poder hacer scroll y ver todo */
+  --padding-bottom: calc(var(--ion-safe-area-bottom) + 80px);
+}

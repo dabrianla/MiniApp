@@ -1,85 +1,203 @@
-.precio-destacado {
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: var(--ion-color-success); /* Color verde nativo de Ionic */
-  background: rgba(var(--ion-color-success-rgb), 0.1); /* Fondo sutil */
-  padding: 8px 12px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* =========================================
+   CONFIGURACIÓN GENERAL Y ÁREA SEGURA
+   ========================================= */
+
+ion-content {
+  /* Espacio extra al final para que el scroll no tape nada */
+  --padding-bottom: calc(var(--ion-safe-area-bottom) + 85px);
 }
 
-/* Ajustes para el texto principal del producto */
-ion-label h2 {
-  font-weight: 600;
-  font-size: 1.1rem;
+ion-fab {
+  /* El botón (+) siempre visible y respetando la barra del celular */
+  margin-bottom: calc(var(--ion-safe-area-bottom) + 16px);
+  margin-right: 8px;
+}
+
+/* =========================================
+   DISEÑO DE LA LISTA PRINCIPAL (TARJETAS)
+   ========================================= */
+
+ion-list {
+  background: transparent;
+  padding: 12px; /* Margen a los lados de la lista */
+}
+
+.item-producto {
+  --background: #1e1e1e; /* Fondo gris muy oscuro para destacar */
+  --padding-start: 10px;
+  --padding-end: 10px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-radius: 18px; /* Bordes muy redondeados tipo iOS */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s;
+
+  &:active {
+    transform: scale(0.97); /* Efecto de "presionado" */
+  }
+}
+
+.thumbnail-grande {
+  width: 75px !important; /* Foto más grande */
+  height: 75px !important;
+  --border-radius: 14px;
+  margin-right: 15px;
+  
+  img {
+    object-fit: cover;
+    border: 1px solid #333;
+  }
+}
+
+.nombre-lista {
+  font-weight: 700 !important;
+  font-size: 1.15rem !important;
+  color: white;
   margin-bottom: 4px;
+}
+
+.marca-lista {
+  font-size: 0.85rem !important;
+  color: #aaa !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.precio-lista {
+  color: var(--ion-color-secondary) !important; /* Tu color verde/celeste */
+  font-weight: 800 !important;
+  font-size: 1.3rem !important;
+  margin: 0 !important;
 }
 
 /* =========================================
    ESTILOS PARA EL ESCÁNER DE CÓDIGO DE BARRAS
    ========================================= */
 
-// Hacemos que el fondo de la página sea transparente cuando escanea
 ion-content.scanner-active {
   --background: transparent;
 }
 
-// Contenedor principal que ocupa toda la pantalla
 .scanner-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
   z-index: 999;
 }
 
-// Texto de instrucción
 .scanner-text {
-  color: white;
-  font-weight: bold;
+  color: white; font-weight: bold;
   text-shadow: 0px 2px 4px rgba(0,0,0,0.8);
   margin-bottom: 40px;
 }
 
-// EL CUADRADO DEL ESCÁNER
 .scanner-box {
-  width: 250px;
-  height: 150px;
-  border: 4px solid #2dd36f; // Borde verde
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.6); // Oscurece el resto de la pantalla
+  width: 250px; height: 150px;
+  border: 4px solid #2dd36f; 
+  border-radius: 12px; position: relative; overflow: hidden;
+  box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.6); 
 }
 
-// LA LÍNEA LÁSER ROJA ANIMADA
 .laser {
-  width: 100%;
-  height: 2px;
-  background-color: red;
-  box-shadow: 0 0 10px red;
-  position: absolute;
-  top: 0;
+  width: 100%; height: 2px;
+  background-color: red; box-shadow: 0 0 10px red;
+  position: absolute; top: 0;
   animation: escanear 2s infinite linear;
 }
 
-// Movimiento de la línea roja
 @keyframes escanear {
-  0% { top: 0; }
-  50% { top: 100%; }
-  100% { top: 0; }
+  0% { top: 0; } 50% { top: 100%; } 100% { top: 0; }
 }
 
-// Botón de cancelar
 .btn-cancelar {
-  margin-top: 60px;
-  width: 200px;
+  margin-top: 60px; width: 200px;
   box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
+}
+
+/* =========================================
+   ESTILOS PARA EL DETALLE (VENDEDOR)
+   ========================================= */
+
+.container-foto-detalle {
+  width: 100%; display: flex; justify-content: center; margin-top: 10px;
+}
+
+.imagen-detalle {
+  width: 200px; height: 200px; object-fit: cover;
+  border-radius: 30px; border: 4px solid var(--ion-color-secondary);
+  box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.6);
+}
+
+.nombre-producto-detalle {
+  text-align: center; font-size: 1.8rem; font-weight: 800;
+  margin: 20px 0; color: white; text-transform: uppercase;
+}
+
+.tarjeta-precio-detalle {
+  border-radius: 20px; margin: 10px 0 25px 0;
+  box-shadow: 0px 10px 20px rgba(var(--ion-color-secondary-rgb), 0.2);
+
+  .titulo-precio-detalle {
+    color: black; font-weight: 700; font-size: 0.9rem;
+    letter-spacing: 3px; display: block; margin-bottom: 5px;
+  }
+}
+
+.monto-detalle { font-size: 3.5rem; font-weight: 900; color: black; }
+.simbolo-peso-detalle { font-size: 2.5rem; color: black; margin-right: 5px; }
+
+.lista-info-detalle {
+  background: transparent;
+  .item-info {
+    --padding-start: 15px; --border-radius: 15px;
+    background: rgba(255, 255, 255, 0.05); margin-bottom: 10px;
+    p { font-size: 0.8rem; color: #aaa; }
+    h3 { font-size: 1.1rem; font-weight: 600; color: white; }
+  }
+}
+
+/* =========================================
+   ESTILOS DEL MODAL DE EDICIÓN (JEFE)
+   ========================================= */
+
+.contenedor-foto-edicion {
+  position: relative; width: 150px; margin: 0 auto 20px auto; cursor: pointer;
+
+  .imagen-editor {
+    width: 150px; height: 150px; object-fit: cover;
+    border-radius: 20px; border: 3px solid var(--ion-color-secondary);
+    display: block; box-shadow: 0px 5px 15px rgba(0,0,0,0.5);
+  }
+
+  .badge-camara {
+    position: absolute; bottom: 5px; right: 5px;
+    background: var(--ion-color-secondary); color: black;
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 1.5rem; box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    border: 2px solid var(--ion-color-dark);
+  }
+
+  &:active { opacity: 0.7; transform: scale(0.95); }
+}
+
+.tarjeta-precio {
+  margin: 0 0 20px 0; border: 2px solid var(--ion-color-secondary);
+  border-radius: 15px; box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
+
+  .precio-container {
+    display: flex; align-items: center; justify-content: center; margin-top: 10px;
+  }
+
+  .simbolo-peso { font-size: 3rem; font-weight: bold; color: black; }
+
+  .input-precio-gigante {
+    font-size: 3rem; font-weight: 900; color: black;
+    --padding-start: 0; max-width: 180px;
+  }
+}
+
+ion-modal ion-content {
+  --padding-bottom: var(--ion-safe-area-bottom);
 }

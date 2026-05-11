@@ -6,6 +6,7 @@ import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
+import { getStorage, provideStorage } from '@angular/fire/storage';
 import { getAuth, provideAuth } from '@angular/fire/auth'; // <-- NUEVO: Importamos el módulo de Auth
 
 bootstrapApplication(AppComponent, {
@@ -23,5 +24,6 @@ bootstrapApplication(AppComponent, {
     })), 
     provideFirestore(() => getFirestore()),
     provideAuth(() => getAuth()), // <-- NUEVO: Encendemos la autenticación
+    provideStorage(() => getStorage())
   ],
 });

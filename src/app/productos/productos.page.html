@@ -16,79 +16,192 @@
     </div>
   </ion-toolbar>
 
- <ion-toolbar color="dark">
-  <div style="display: flex; gap: 10px; padding: 0 15px; margin-bottom: 10px; overflow-x: auto;">
-    
-    <ion-select label="Categoría" label-placement="floating" interface="popover" [(ngModel)]="filtroCategoria" (ionChange)="cambiarFiltroCategoria($event)" style="min-width: 120px; background: #333; border-radius: 8px;">
-      <ion-select-option value="Todas">Todas</ion-select-option>
-      <ion-select-option *ngFor="let cat of categoriasUnicas" [value]="cat">{{ cat }}</ion-select-option>
-    </ion-select>
+  <ion-toolbar color="dark">
+    <div style="display: flex; gap: 10px; padding: 0 15px; margin-bottom: 10px; overflow-x: auto;">
+      <ion-select label="Categoría" label-placement="floating" interface="popover" [(ngModel)]="filtroCategoria" (ionChange)="cambiarFiltroCategoria($event)" style="min-width: 120px; background: #333; border-radius: 8px;">
+        <ion-select-option value="Todas">Todas</ion-select-option>
+        <ion-select-option *ngFor="let cat of categoriasUnicas" [value]="cat">{{ cat }}</ion-select-option>
+      </ion-select>
 
-    <ion-select label="Marca" label-placement="floating" interface="popover" [(ngModel)]="filtroMarca" (ionChange)="cambiarFiltroMarca($event)" style="min-width: 120px; background: #333; border-radius: 8px;">
-      <ion-select-option value="Todas">Todas</ion-select-option>
-      <ion-select-option *ngFor="let marca of marcasUnicas" [value]="marca">{{ marca }}</ion-select-option>
-    </ion-select>
+      <ion-select label="Marca" label-placement="floating" interface="popover" [(ngModel)]="filtroMarca" (ionChange)="cambiarFiltroMarca($event)" style="min-width: 120px; background: #333; border-radius: 8px;">
+        <ion-select-option value="Todas">Todas</ion-select-option>
+        <ion-select-option *ngFor="let marca of marcasUnicas" [value]="marca">{{ marca }}</ion-select-option>
+      </ion-select>
 
-    <ion-select label="Proveedor" label-placement="floating" interface="popover" [(ngModel)]="filtroDistribuidor" (ionChange)="cambiarFiltroDistribuidor($event)" style="min-width: 120px; background: #333; border-radius: 8px;">
-      <ion-select-option value="Todos">Todos</ion-select-option>
-      <ion-select-option *ngFor="let dist of distribuidoresUnicos" [value]="dist">{{ dist }}</ion-select-option>
-    </ion-select>
-    
-  </div>
-</ion-toolbar>
+      <ion-select label="Proveedor" label-placement="floating" interface="popover" [(ngModel)]="filtroDistribuidor" (ionChange)="cambiarFiltroDistribuidor($event)" style="min-width: 120px; background: #333; border-radius: 8px;">
+        <ion-select-option value="Todos">Todos</ion-select-option>
+        <ion-select-option *ngFor="let dist of distribuidoresUnicos" [value]="dist">{{ dist }}</ion-select-option>
+      </ion-select>
+    </div>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding" [class.scanner-active]="escaneando">
 
   <div *ngIf="!escaneando">
-    <ion-list>
+    <ion-list style="background: transparent;">
       <ion-item-sliding *ngFor="let producto of productosFiltrados">
         
-        <ion-item (click)="abrirDetalle(producto)">
-          <ion-thumbnail slot="start">
+        <ion-item (click)="abrirDetalle(producto)" lines="none" class="item-producto">
+          <ion-thumbnail slot="start" class="thumbnail-grande">
             <img [src]="producto.imagen || 'assets/shapes.svg'" alt="{{ producto.nombre }}" />
           </ion-thumbnail>
+
           <ion-label>
-            <h2>{{ producto.nombre }}</h2>
-            <p>Marca: {{ producto.marca || 'N/A' }} | Prov: {{ producto.distribuidor || 'N/A' }}</p>
-            <p>Stock: {{ producto.stock }} | Cod: {{ producto.codigoBarras }}</p>
+            <h2 class="nombre-lista">{{ producto.nombre }}</h2>
+            <p class="marca-lista">{{ producto.marca || 'Sin marca' }}</p>
           </ion-label>
+
           <ion-label slot="end" class="ion-text-right">
-            <h2 style="color: var(--ion-color-secondary); font-weight: bold;">${{ producto.precio }}</h2>
+            <h2 class="precio-lista">${{ formatearNumero(producto.precio) }}</h2>
           </ion-label>
         </ion-item>
 
         <ion-item-options side="end" *ngIf="authService.userData">
-          <ion-item-option color="primary" (click)="abrirEditor(producto)">
+          <ion-item-option color="primary" (click)="abrirEditor(producto)" style="border-radius: 15px 0 0 15px;">
             <ion-icon slot="icon-only" name="create-outline"></ion-icon>
           </ion-item-option>
-          <ion-item-option color="danger" (click)="confirmarEliminacion(producto.id)">
+          <ion-item-option color="danger" (click)="confirmarEliminacion(producto)">
             <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
           </ion-item-option>
         </ion-item-options>
 
       </ion-item-sliding>
     </ion-list>
-
-    <ion-fab *ngIf="authService.userData" vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button routerLink="/agregar-producto" color="secondary">
-        <ion-icon name="add" style="color: black;"></ion-icon>
-      </ion-fab-button>
-    </ion-fab>
   </div>
 
   <div *ngIf="escaneando" class="scanner-overlay">
-    
     <h2 class="scanner-text">Escanea para buscar</h2>
-    
     <div class="scanner-box">
       <div class="laser"></div>
     </div>
-
     <ion-button (click)="detenerEscaneo()" color="danger" class="btn-cancelar">
       Cancelar Escaneo
     </ion-button>
-
   </div>
 
+  <ion-fab *ngIf="authService.userData && !escaneando" vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button routerLink="/agregar-producto" color="secondary">
+      <ion-icon name="add" style="color: black;"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
 </ion-content>
+
+<ion-modal [isOpen]="detalleModalAbierto" (didDismiss)="cerrarDetalle()" [initialBreakpoint]="0.85" [breakpoints]="[0, 0.85, 1]">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="dark">
+        <ion-title color="secondary">Detalle del Producto</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarDetalle()">
+            <ion-icon slot="icon-only" name="close-outline" color="light"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content color="dark" class="ion-padding">
+      <div class="container-foto-detalle">
+        <img [src]="productoDetalle.imagen || 'assets/shapes.svg'" class="imagen-detalle" />
+      </div>
+
+      <h1 class="nombre-producto-detalle">{{ productoDetalle.nombre }}</h1>
+
+      <ion-card color="secondary" class="tarjeta-precio-detalle">
+        <ion-card-content class="ion-text-center">
+          <ion-label class="titulo-precio-detalle">PRECIO AL PÚBLICO</ion-label>
+          <div class="precio-display-detalle">
+            <span class="simbolo-peso-detalle">$</span>
+            <span class="monto-detalle">{{ formatearNumero(productoDetalle.precio) }}</span>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-list lines="none" class="lista-info-detalle">
+        <ion-item color="dark" class="item-info">
+          <ion-icon slot="start" name="cube-outline" color="secondary"></ion-icon>
+          <ion-label>
+            <p>Stock Disponible</p>
+            <h3>{{ productoDetalle.stock || 0 }} unidades</h3>
+          </ion-label>
+        </ion-item>
+        <ion-item color="dark" class="item-info">
+          <ion-icon slot="start" name="barcode-outline" color="secondary"></ion-icon>
+          <ion-label>
+            <p>Código de Barras</p>
+            <h3>{{ productoDetalle.codigoBarras || 'N/A' }}</h3>
+          </ion-label>
+        </ion-item>
+        <ion-item color="dark" class="item-info">
+          <ion-icon slot="start" name="pricetag-outline" color="secondary"></ion-icon>
+          <ion-label>
+            <p>Categoría / Marca</p>
+            <h3>{{ productoDetalle.categoria }} | {{ productoDetalle.marca || 'N/A' }}</h3>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+
+      <ion-button expand="block" fill="outline" color="secondary" class="ion-margin-top" (click)="cerrarDetalle()">
+        Volver al Inventario
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<ion-modal [isOpen]="modalAbierto" (didDismiss)="cerrarEditor()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="dark">
+        <ion-title color="secondary">Editar Producto</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarEditor()">
+            <ion-icon slot="icon-only" name="close-outline" color="secondary"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content color="dark" class="ion-padding">
+      <div class="contenedor-foto-edicion" (click)="tomarFotoEdicion()">
+        <img [src]="productoEditando.imagen || 'assets/shapes.svg'" class="imagen-editor" />
+        <div class="badge-camara">
+          <ion-icon name="camera-outline"></ion-icon>
+        </div>
+      </div>
+      <p class="ion-text-center" style="color: #aaa; font-size: 0.8rem; margin-top: -10px; margin-bottom: 20px;">
+        Toca la foto para cambiarla
+      </p>
+
+      <ion-card color="secondary" class="tarjeta-precio">
+        <ion-card-content class="ion-text-center">
+          <ion-label style="color: black; font-weight: 800; font-size: 1.2rem; letter-spacing: 2px;">PRECIO DE VENTA</ion-label>
+          <div class="precio-container">
+            <span class="simbolo-peso">$</span>
+            <ion-input type="text" inputmode="numeric" [value]="precioFormateado" (ionInput)="formatearPrecioEnVivo($event)" class="input-precio-gigante"></ion-input>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-list lines="full" style="background: transparent;">
+        <ion-item color="dark">
+          <ion-input label="Nombre del Producto" labelPlacement="stacked" [(ngModel)]="productoEditando.nombre"></ion-input>
+        </ion-item>
+        <ion-item color="dark">
+          <ion-input label="Categoría" labelPlacement="stacked" [(ngModel)]="productoEditando.categoria"></ion-input>
+        </ion-item>
+        <ion-item color="dark">
+          <ion-input label="Marca" labelPlacement="stacked" [(ngModel)]="productoEditando.marca"></ion-input>
+        </ion-item>
+        <ion-item color="dark">
+          <ion-input label="Proveedor / Distribuidor" labelPlacement="stacked" [(ngModel)]="productoEditando.distribuidor"></ion-input>
+        </ion-item>
+      </ion-list>
+
+      <ion-button expand="block" color="primary" class="ion-margin-top" style="height: 50px; font-weight: bold;" (click)="guardarEdicion()">
+        <ion-icon name="save-outline" slot="start"></ion-icon>
+        GUARDAR CAMBIOS
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>

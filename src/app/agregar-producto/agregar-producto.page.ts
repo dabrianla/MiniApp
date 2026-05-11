@@ -5,13 +5,14 @@ import { Router } from '@angular/router';
 import { 
   IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, 
   IonBackButton, IonItem, IonInput, IonButton, IonLabel, IonIcon,
-  IonSelect, IonSelectOption, LoadingController
+  IonSelect, IonSelectOption, IonGrid, IonRow, IonCol, 
+  LoadingController, AlertController 
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { barcodeOutline, cameraOutline } from 'ionicons/icons';
+import { barcodeOutline, cameraOutline, imageOutline, saveOutline } from 'ionicons/icons';
 import { InventarioService, Producto } from '../services/inventario';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capacitor/camera';
 
 @Component({
   selector: 'app-agregar-producto',
@@ -19,86 +20,133 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
   styleUrls: ['./agregar-producto.page.scss'],
   standalone: true,
   imports: [
-    CommonModule, FormsModule, IonContent, IonHeader, IonTitle, 
-    IonToolbar, IonButtons, IonBackButton, IonItem, IonInput, 
-    IonButton, IonLabel, IonIcon, IonSelect, IonSelectOption
+    CommonModule, FormsModule, IonContent, IonHeader, IonTitle, IonToolbar, 
+    IonButtons, IonBackButton, IonItem, IonInput, IonButton, IonLabel, IonIcon,
+    IonSelect, IonSelectOption, IonGrid, IonRow, IonCol
   ]
 })
 export class AgregarProductoPage {
-  private inventarioService = inject(InventarioService);
-  private router = inject(Router);
-  private ngZone = inject(NgZone);
-  private loadingController = inject(LoadingController);
-
-  nuevoProducto: Producto = {
-    id: '',
-    codigoBarras: '',
+  nuevoProducto: any = {
     nombre: '',
-    categoria: 'Abarrotes',
+    codigoBarras: '',
     marca: '',
-    medida: 'Unidad',
-    precio: 0,
+    categoria: '',
+    medida: '',
     stock: null,
+    precio: null,
     distribuidor: '',
-    imagen: 'https://ionicframework.com/docs/img/demos/thumbnail.svg'
+    imagen: ''
   };
 
   escaneando: boolean = false;
 
+  private inventarioService = inject(InventarioService);
+  private router = inject(Router);
+  private loadingController = inject(LoadingController);
+  private alertController = inject(AlertController);
+  private ngZone = inject(NgZone);
+
   constructor() {
-    // Registramos los íconos usados en esta pantalla
-    addIcons({ barcodeOutline, cameraOutline });
+    addIcons({ barcodeOutline, cameraOutline, imageOutline, saveOutline });
   }
 
+  // --- 1. GUARDAR PRODUCTO ---
   async guardarProducto() {
-    if (!this.nuevoProducto.nombre || this.nuevoProducto.precio <= 0) {
-      alert('El nombre y el precio son obligatorios.');
+    if (!this.nuevoProducto.nombre || !this.nuevoProducto.precio) {
+      const alert = await this.alertController.create({
+        header: 'Campos incompletos',
+        message: 'El nombre y el precio son obligatorios.',
+        buttons: ['OK']
+      });
+      await alert.present();
       return;
     }
 
-    // 1. Mostramos el cargando, pero le ponemos un tiempo máximo (medio segundo)
-    // para que sea solo un efecto visual rápido.
+    // Validación de duplicados
+    if (this.nuevoProducto.codigoBarras && this.nuevoProducto.codigoBarras.trim() !== '') {
+      const codigoA_Buscar = this.nuevoProducto.codigoBarras.trim();
+      
+      const productoExistente = this.inventarioService.productos.find(
+        (p) => p.codigoBarras === codigoA_Buscar
+      );
+
+      if (productoExistente) {
+        const alert = await this.alertController.create({
+          header: '❌ Código Duplicado ❌',
+          message: `No se puede agregar. Ya existe un producto con este código de barras: ${productoExistente.nombre}. 
+          Por favor, búscalo en el inventario si deseas actualizar su precio o stock.`,
+          buttons: ['Entendido']
+        });
+        await alert.present();
+        return; 
+      }
+    }
+
     const loading = await this.loadingController.create({
-      message: 'Guardando...',
-      spinner: 'circles',
-      duration: 500 // <-- Se cerrará automáticamente en 500 milisegundos
+      message: 'Subiendo producto y foto...', // 🟢 Cambiamos el mensaje para que el usuario sepa qué pasa
+      spinner: 'circles'
     });
     await loading.present();
 
     try {
-      // 2. Le quitamos el "await" inicial. 
-      // Lanzamos la función y dejamos que Firebase se encargue de subirlo en segundo plano.
-      this.inventarioService.agregarProducto(this.nuevoProducto);
+      let urlImagenFinal = '';
+
+      // 🟢 EL PASO CLAVE: Subimos la imagen a Storage antes de guardar el producto
+      if (this.nuevoProducto.imagen) {
+        urlImagenFinal = await this.inventarioService.subirImagen(
+          this.nuevoProducto.imagen, 
+          this.nuevoProducto.nombre.replace(/\s+/g, '_') // Limpiamos el nombre para que el archivo no tenga espacios raros
+        );
+      }
+
+      // Reemplazamos la imagen gigante en Base64 por la URL cortita de internet
+      const datosParaGuardar = {
+        ...this.nuevoProducto,
+        imagen: urlImagenFinal, 
+        codigoBarras: this.nuevoProducto.codigoBarras || '' 
+      };
+
+      await this.inventarioService.agregarProducto(datosParaGuardar);
+      await loading.dismiss();
       
-      // 3. Nos vamos directamente a la lista sin esperar al servidor
-      this.ngZone.run(() => {
-        this.router.navigate(['/productos'], { replaceUrl: true });
+      const successAlert = await this.alertController.create({
+        header: '¡Éxito!',
+        message: 'Producto guardado correctamente en el inventario.',
+        buttons: ['Genial']
       });
-
+      await successAlert.present();
+      
+      this.router.navigate(['/productos'], { replaceUrl: true });
+      
     } catch (error) {
+      await loading.dismiss();
       console.error(error);
-      alert('Error al guardar. Revisa tu código.');
+      const errorAlert = await this.alertController.create({
+        header: 'Error',
+        message: 'Hubo un problema de conexión al guardar el producto.',
+        buttons: ['OK']
+      });
+      await errorAlert.present();
     }
-}
+  }
 
+  // --- 2. ESCÁNER DE CÓDIGO DE BARRAS ---
   async escanearCodigo() {
     try {
-      const status = await BarcodeScanner.checkPermission({ force: true });
-      if (status.granted) {
-        this.escaneando = true;
-        document.body.classList.add('qrscanner');
-        BarcodeScanner.hideBackground();
-        
-        const result = await BarcodeScanner.startScan(); 
+      await BarcodeScanner.checkPermission({ force: true });
+      BarcodeScanner.hideBackground();
+      document.body.classList.add('qrscanner');
+      this.escaneando = true;
 
-        if (result.hasContent) {
-          this.ngZone.run(() => {
-            this.nuevoProducto.codigoBarras = String(result.content).trim(); 
-          });
-        }
+      const result = await BarcodeScanner.startScan();
+
+      if (result.hasContent) {
+        this.ngZone.run(() => {
+          this.nuevoProducto.codigoBarras = result.content.trim();
+        });
       }
     } catch (error) {
-      console.error('Error usando el escáner', error);
+      console.error('Error al escanear', error);
     } finally {
       this.detenerEscaneo();
     }
@@ -108,25 +156,26 @@ export class AgregarProductoPage {
     BarcodeScanner.showBackground();
     BarcodeScanner.stopScan();
     document.body.classList.remove('qrscanner');
-    this.escaneando = false; 
+    this.escaneando = false;
   }
 
+  // --- 3. CÁMARA PARA FOTOS ---
   async tomarFoto() {
     try {
       const foto = await Camera.getPhoto({
         quality: 50,
+        width: 800,
         allowEditing: false,
-        resultType: CameraResultType.Uri,
-        source: CameraSource.Camera
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera, // 🟢 Forzamos que abra la cámara directo (sin preguntar galería)
+        direction: CameraDirection.Rear // 🟢 Forzamos cámara TRASERA
       });
 
-      if (foto.webPath) {
-        this.ngZone.run(() => {
-          this.nuevoProducto.imagen = foto.webPath!;
-        });
-      }
+      this.ngZone.run(() => {
+        this.nuevoProducto.imagen = foto.dataUrl;
+      });
     } catch (error) {
-      console.error('Error al tomar la foto', error);
+      console.error('Error al tomar foto', error);
     }
   }
 
