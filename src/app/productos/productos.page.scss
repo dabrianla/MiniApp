@@ -14,61 +14,77 @@ ion-fab {
 }
 
 /* =========================================
-   DISEÑO DE LA LISTA PRINCIPAL (TARJETAS)
+   DISEÑO DE LA LISTA PRINCIPAL (TARJETAS CORREGIDO)
    ========================================= */
 
-ion-list {
+/* =========================================
+   DISEÑO DE LA LISTA (TARJETAS QUE TAPAN)
+   ========================================= */
+
+.lista-productos-tarjetas {
   background: transparent;
-  padding: 12px; /* Margen a los lados de la lista */
+  padding: 12px;
 }
 
-.item-producto {
-  --background: #1e1e1e; /* Fondo gris muy oscuro para destacar */
-  --padding-start: 10px;
-  --padding-end: 10px;
-  --padding-top: 12px;
-  --padding-bottom: 12px;
-  margin-bottom: 12px;
-  border-radius: 18px; /* Bordes muy redondeados tipo iOS */
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s;
+/* Contenedor del sliding: Solo para el margen y la sombra */
+.sliding-contenedor {
+  margin-bottom: 14px;
+  background: #000; /* Fondo negro de base para que los botones resalten al deslizar */
+  border-radius: 18px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
 
-  &:active {
-    transform: scale(0.97); /* Efecto de "presionado" */
-  }
+/* 🟢 LA TARJETA QUE SE MUEVE (SÓLIDA Y OPACA) */
+.item-tarjeta-producto {
+  /* Ponemos el color de fondo aquí para que NO sea transparente */
+  --background: #1e1e1e; 
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  --inner-padding-end: 0;
+  --min-height: 90px;
+  
+  /* Esto asegura que la tarjeta tenga sus bordes redondeados al moverse */
+  border-radius: 18px;
+  z-index: 2; /* Asegura que esté por encima de los botones */
 }
 
 .thumbnail-grande {
-  width: 75px !important; /* Foto más grande */
-  height: 75px !important;
-  --border-radius: 14px;
+  width: 70px !important;
+  height: 70px !important;
+  --border-radius: 12px;
   margin-right: 15px;
   
   img {
     object-fit: cover;
-    border: 1px solid #333;
   }
 }
 
 .nombre-lista {
   font-weight: 700 !important;
-  font-size: 1.15rem !important;
+  font-size: 1.1rem !important;
   color: white;
-  margin-bottom: 4px;
 }
 
 .marca-lista {
   font-size: 0.85rem !important;
-  color: #aaa !important;
+  color: #888 !important;
   text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
 .precio-lista {
-  color: var(--ion-color-secondary) !important; /* Tu color verde/celeste */
+  color: var(--ion-color-secondary) !important;
   font-weight: 800 !important;
-  font-size: 1.3rem !important;
-  margin: 0 !important;
+  font-size: 1.25rem !important;
+}
+
+/* 🟢 ESTILO DE LOS BOTONES DE FONDO */
+.boton-opcion {
+  --padding-start: 20px;
+  --padding-end: 20px;
+  font-size: 1.5rem;
 }
 
 /* =========================================

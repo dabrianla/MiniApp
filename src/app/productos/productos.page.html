@@ -39,36 +39,36 @@
 <ion-content class="ion-padding" [class.scanner-active]="escaneando">
 
   <div *ngIf="!escaneando">
-    <ion-list style="background: transparent;">
-      <ion-item-sliding *ngFor="let producto of productosFiltrados">
-        
-        <ion-item (click)="abrirDetalle(producto)" lines="none" class="item-producto">
-          <ion-thumbnail slot="start" class="thumbnail-grande">
-            <img [src]="producto.imagen || 'assets/shapes.svg'" alt="{{ producto.nombre }}" />
-          </ion-thumbnail>
+      <ion-list class="lista-productos-tarjetas">
+        <ion-item-sliding *ngFor="let producto of productosFiltrados" class="sliding-contenedor">
+          
+          <ion-item (click)="abrirDetalle(producto)" lines="none" class="item-tarjeta-producto">
+            <ion-thumbnail slot="start" class="thumbnail-grande">
+              <img [src]="producto.imagen || 'assets/shapes.svg'" alt="{{ producto.nombre }}" />
+            </ion-thumbnail>
 
-          <ion-label>
-            <h2 class="nombre-lista">{{ producto.nombre }}</h2>
-            <p class="marca-lista">{{ producto.marca || 'Sin marca' }}</p>
-          </ion-label>
+            <ion-label>
+              <h2 class="nombre-lista">{{ producto.nombre }}</h2>
+              <p class="marca-lista">{{ producto.marca || 'Sin marca' }}</p>
+            </ion-label>
 
-          <ion-label slot="end" class="ion-text-right">
-            <h2 class="precio-lista">${{ formatearNumero(producto.precio) }}</h2>
-          </ion-label>
-        </ion-item>
+            <ion-label slot="end" class="ion-text-right">
+              <h2 class="precio-lista">${{ formatearNumero(producto.precio) }}</h2>
+            </ion-label>
+          </ion-item>
 
-        <ion-item-options side="end" *ngIf="authService.userData">
-          <ion-item-option color="primary" (click)="abrirEditor(producto)" style="border-radius: 15px 0 0 15px;">
-            <ion-icon slot="icon-only" name="create-outline"></ion-icon>
-          </ion-item-option>
-          <ion-item-option color="danger" (click)="confirmarEliminacion(producto)">
-            <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
-          </ion-item-option>
-        </ion-item-options>
+          <ion-item-options side="end" *ngIf="authService.userData">
+            <ion-item-option color="primary" (click)="abrirEditor(producto)" class="boton-opcion">
+              <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+            </ion-item-option>
+            <ion-item-option color="danger" (click)="confirmarEliminacion(producto)" class="boton-opcion">
+              <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+            </ion-item-option>
+          </ion-item-options>
 
-      </ion-item-sliding>
-    </ion-list>
-  </div>
+        </ion-item-sliding>
+      </ion-list>
+    </div>
 
   <div *ngIf="escaneando" class="scanner-overlay">
     <h2 class="scanner-text">Escanea para buscar</h2>
