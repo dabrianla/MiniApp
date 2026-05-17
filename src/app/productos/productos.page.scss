@@ -217,3 +217,29 @@ ion-content.scanner-active {
 ion-modal ion-content {
   --padding-bottom: var(--ion-safe-area-bottom);
 }
+
+/* =========================================
+   ESTILOS DE MODO OFERTA
+   ========================================= */
+
+// Pinta el fondo de color secundario (amarillo) y las letras negras
+.item-tarjeta-producto.oferta-activa {
+  --background: var(--ion-color-secondary); 
+  
+  .nombre-lista, .marca-lista, .precio-lista {
+    color: black !important;
+    font-weight: bold;
+  }
+}
+
+// Etiqueta visual extra al lado del nombre
+.etiqueta-oferta {
+  background: black;
+  color: var(--ion-color-secondary);
+  font-size: 0.7rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  text-transform: uppercase;
+  vertical-align: middle;
+}

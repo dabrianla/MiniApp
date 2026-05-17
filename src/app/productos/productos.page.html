@@ -42,13 +42,16 @@
       <ion-list class="lista-productos-tarjetas">
         <ion-item-sliding *ngFor="let producto of productosFiltrados" class="sliding-contenedor">
           
-          <ion-item (click)="abrirDetalle(producto)" lines="none" class="item-tarjeta-producto">
+          <ion-item (click)="abrirDetalle(producto)" lines="none" class="item-tarjeta-producto" [ngClass]="{'oferta-activa': producto.oferta}">
             <ion-thumbnail slot="start" class="thumbnail-grande">
               <img [src]="producto.imagen || 'assets/shapes.svg'" alt="{{ producto.nombre }}" />
             </ion-thumbnail>
 
             <ion-label>
-              <h2 class="nombre-lista">{{ producto.nombre }}</h2>
+              <h2 class="nombre-lista">
+                {{ producto.nombre }}
+                <span *ngIf="producto.oferta" class="etiqueta-oferta">¡Oferta!</span>
+              </h2>
               <p class="marca-lista">{{ producto.marca || 'Sin marca' }}</p>
             </ion-label>
 
@@ -184,6 +187,10 @@
       </ion-card>
 
       <ion-list lines="full" style="background: transparent;">
+        <ion-item color="dark">
+          <ion-label style="font-weight: bold; color: var(--ion-color-secondary);">¿Producto en Oferta?</ion-label>
+          <ion-toggle slot="end" color="secondary" [(ngModel)]="productoEditando.oferta"></ion-toggle>
+        </ion-item>
         <ion-item color="dark">
           <ion-input label="Nombre del Producto" labelPlacement="stacked" [(ngModel)]="productoEditando.nombre"></ion-input>
         </ion-item>

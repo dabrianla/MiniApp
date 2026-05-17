@@ -11,7 +11,7 @@ import {
   IonButton, AlertController,
   IonItemSliding, IonItemOptions, IonItemOption,
   IonModal, IonCard, IonCardContent, IonInput,
-  LoadingController // <-- Asegúrate de que esté aquí
+  LoadingController, IonToggle
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { add, barcodeOutline, createOutline, trashOutline, saveOutline, closeOutline, cameraOutline } from 'ionicons/icons';
@@ -33,7 +33,7 @@ import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capaci
     IonFab, IonFabButton, IonIcon,
     IonSelect, IonSelectOption,
     IonButton, IonItemSliding, IonItemOptions, IonItemOption,
-    IonModal, IonCard, IonCardContent, IonInput
+    IonModal, IonCard, IonCardContent, IonInput, IonToggle
   ]
 })
 export class ProductosPage implements OnInit {
@@ -79,16 +79,46 @@ export class ProductosPage implements OnInit {
 
   ionViewWillLeave() { if (this.escaneando) this.detenerEscaneo(); }
 
-  // ... (Funciones de filtros y búsqueda se mantienen igual) ...
+  // ==========================================
+  // NUEVA LÓGICA DE FILTROS EN CASCADA
+  // ==========================================
+
   cargarFiltrosYProductos() {
     const todos = this.inventarioService.productos;
+    // Las categorías y distribuidores siempre se cargan completos
     this.categoriasUnicas = [...new Set(todos.map(p => p.categoria).filter(c => c) as string[])];
-    this.marcasUnicas = [...new Set(todos.map(p => p.marca).filter(m => m) as string[])];
     this.distribuidoresUnicos = [...new Set(todos.map(p => p.distribuidor).filter(d => d) as string[])];
+    
+    // Las marcas ahora dependen de la categoría seleccionada
+    this.actualizarMarcasDisponibles(); 
     this.aplicarFiltros();
   }
 
-  cambiarFiltroCategoria(event: any) { this.filtroCategoria = event.detail.value; this.aplicarFiltros(); }
+  // 1. Cuando cambias la categoría, actualizamos la lista de marcas
+  cambiarFiltroCategoria(event: any) { 
+    this.filtroCategoria = event.detail.value; 
+    this.actualizarMarcasDisponibles(); // <--- Llamamos a la cascada
+    this.aplicarFiltros(); 
+  }
+
+  // 2. La función que hace la magia de extraer solo las marcas correspondientes
+  actualizarMarcasDisponibles() {
+    let productosParaMarcas = this.inventarioService.productos;
+
+    if (this.filtroCategoria !== 'Todas') {
+      productosParaMarcas = productosParaMarcas.filter(p => p.categoria === this.filtroCategoria);
+    }
+
+    // Extraemos las marcas únicas de los productos ya filtrados
+    this.marcasUnicas = [...new Set(productosParaMarcas.map(p => p.marca).filter(m => m) as string[])];
+
+    // Si la marca que el usuario tenía seleccionada antes ya no existe en esta nueva categoría,
+    // la devolvemos a "Todas" para que la lista no quede vacía por error.
+    if (this.filtroMarca !== 'Todas' && !this.marcasUnicas.includes(this.filtroMarca)) {
+      this.filtroMarca = 'Todas';
+    }
+  }
+
   cambiarFiltroMarca(event: any) { this.filtroMarca = event.detail.value; this.aplicarFiltros(); }
   cambiarFiltroDistribuidor(event: any) { this.filtroDistribuidor = event.detail.value; this.aplicarFiltros(); }
   buscarProducto(event: any) { this.textoBusqueda = event.target.value.toLowerCase(); this.aplicarFiltros(); }
@@ -106,9 +136,20 @@ export class ProductosPage implements OnInit {
         return nombre.includes(termino) || codigo.includes(termino);
       });
     }
+    // NUEVO: Ordenar para que las ofertas queden de los primeros en la lista
+    resultado.sort((a, b) => {
+      if (a.oferta && !b.oferta) return -1; // a va primero
+      if (!a.oferta && b.oferta) return 1;  // b va primero
+      return 0; // se quedan igual
+    });
+
     this.productosFiltrados = resultado;
     this.cdr.detectChanges(); 
   }
+
+  // ==========================================
+  // RESTO DEL CÓDIGO (Escáner, Edición, etc)
+  // ==========================================
 
   async escanearParaBuscar() {
     try {
@@ -150,12 +191,13 @@ export class ProductosPage implements OnInit {
   }
   cerrarDetalle() { this.detalleModalAbierto = false; this.productoDetalle = {}; }
 
-  // ==========================================
-  // LÓGICA DEL EDITOR CON CAMBIO DE FOTO
-  // ==========================================
+  // --- LÓGICA DEL EDITOR CON CAMBIO DE FOTO ---
 
   abrirEditor(producto: Producto) {
-    this.productoEditando = { ...producto }; 
+    this.productoEditando = { ...producto };
+    if (this.productoEditando.oferta === undefined) {
+      this.productoEditando.oferta = false;
+    } 
     this.precioFormateado = this.formatearNumero(this.productoEditando.precio);
     this.modalAbierto = true;
   }
@@ -177,7 +219,6 @@ export class ProductosPage implements OnInit {
       });
 
       this.ngZone.run(() => {
-        // Reemplazamos la imagen actual por la base64 temporal
         this.productoEditando.imagen = foto.dataUrl;
       });
     } catch (error) {
@@ -195,7 +236,6 @@ export class ProductosPage implements OnInit {
     await loading.present();
 
     try {
-      // 🟢 Si la imagen empieza con "data:", significa que es una foto nueva
       if (this.productoEditando.imagen && this.productoEditando.imagen.startsWith('data:')) {
         const nuevaUrl = await this.inventarioService.subirImagen(
           this.productoEditando.imagen,

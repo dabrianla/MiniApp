@@ -8,6 +8,8 @@ import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
 import { getStorage, provideStorage } from '@angular/fire/storage';
 import { getAuth, provideAuth } from '@angular/fire/auth'; // <-- NUEVO: Importamos el módulo de Auth
+import { getApp } from '@angular/fire/app';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from '@angular/fire/firestore';
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -22,7 +24,16 @@ bootstrapApplication(AppComponent, {
       authDomain: "miniapp-inventario.firebaseapp.com", 
       messagingSenderId: "633727289203" 
     })), 
-    provideFirestore(() => getFirestore()),
+    provideFirestore(() => {
+    const app = getApp();
+    // Inicializamos Firestore con la caché local activada
+    const firestore = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager()
+      })
+    });
+  return firestore;
+  }),
     provideAuth(() => getAuth()), // <-- NUEVO: Encendemos la autenticación
     provideStorage(() => getStorage())
   ],
