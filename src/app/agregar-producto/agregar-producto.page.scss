@@ -68,3 +68,120 @@ ion-content.scanner-active {
   box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
 }
 
+
+/* =========================================
+   ESTILOS PARA EL CONTENEDOR DE FOTO PREMIUM
+   ========================================= */
+.contenedor-foto-estilo {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 25px auto;
+  position: relative;
+  border: 2px dashed var(--ion-color-secondary); /* Borde amarillo punteado */
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05); /* Fondo oscuro traslúcido */
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+
+  .imagen-editor {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0; /* Totalmente transparente si no hay foto */
+    transition: opacity 0.3s ease;
+  }
+
+  .imagen-editor.con-foto {
+    opacity: 1; /* Se vuelve visible cuando se toma la foto */
+  }
+
+  .overlay-camara {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--ion-color-secondary); /* Usa el amarillo de tu app */
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+    
+    ion-icon {
+      font-size: 2.5rem;
+      margin-bottom: 5px;
+    }
+  }
+
+  /* Efecto visual al tocar la pantalla */
+  &:active {
+    transform: scale(0.95);
+    border-style: solid; /* Cambia a borde sólido al tocar */
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* =========================================
+   ESTILOS DE LA TARJETA DEL ESCÁNER GIGANTE
+   ========================================= */
+.tarjeta-escaner {
+  border-radius: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 15px rgba(204, 245, 0, 0.4); /* Brillo amarillo elegante */
+  
+  .zona-tocar-escaner {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    padding: 10px 0;
+    
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  /* Caja semi-transparente para escribir el código manual */
+  .input-codigo-manual {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    margin-top: 10px;
+    
+    ion-input {
+      --color: black;
+      --placeholder-color: rgba(0, 0, 0, 0.6);
+      font-weight: bold;
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+    }
+  }
+}
+
+/* =========================================
+   ESTILOS PARA EL FORMULARIO PREMIUM
+   ========================================= */
+.lista-info-detalle {
+  background: transparent;
+  padding: 0;
+  
+  .item-info {
+    --background: rgba(255, 255, 255, 0.05); /* Gris muy oscuro/transparente */
+    --border-radius: 15px;
+    --padding-start: 15px;
+    --inner-padding-end: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+
+    ion-icon {
+      margin-right: 15px;
+      font-size: 1.5rem;
+    }
+
+    ion-input, ion-select {
+      --padding-top: 8px;
+      --padding-bottom: 8px;
+      font-size: 1.05rem;
+    }
+  }
+}

@@ -11,11 +11,11 @@ import {
   IonButton, AlertController,
   IonItemSliding, IonItemOptions, IonItemOption,
   IonModal, IonCard, IonCardContent, IonInput,
-  LoadingController, IonToggle
+  LoadingController, IonToggle, IonFooter
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { add, barcodeOutline, createOutline, trashOutline, saveOutline, closeOutline, cameraOutline } from 'ionicons/icons';
-import { InventarioService, Producto } from '../services/inventario';
+// 👇 AQUI AGREGAMOS cubeOutline y pricetagOutline
+import { add, barcodeOutline, createOutline, trashOutline, saveOutline, closeOutline, cameraOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline } from 'ionicons/icons';import { InventarioService, Producto } from '../services/inventario';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { AuthService } from '../services/auth';
 import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capacitor/camera'; // <-- IMPORTANTE
@@ -33,7 +33,7 @@ import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capaci
     IonFab, IonFabButton, IonIcon,
     IonSelect, IonSelectOption,
     IonButton, IonItemSliding, IonItemOptions, IonItemOption,
-    IonModal, IonCard, IonCardContent, IonInput, IonToggle
+    IonModal, IonCard, IonCardContent, IonInput, IonToggle, IonFooter
   ]
 })
 export class ProductosPage implements OnInit {
@@ -66,7 +66,8 @@ export class ProductosPage implements OnInit {
     private cdr: ChangeDetectorRef, 
     private alertController: AlertController
   ) {
-    addIcons({ add, barcodeOutline, createOutline, trashOutline, saveOutline, closeOutline, cameraOutline });
+    // 👇 AQUI REGISTRAMOS cubeOutline y pricetagOutline
+    addIcons({ add, barcodeOutline, createOutline, trashOutline, saveOutline, closeOutline, cameraOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline });
   }
 
   ngOnInit() {
@@ -122,6 +123,11 @@ export class ProductosPage implements OnInit {
   cambiarFiltroMarca(event: any) { this.filtroMarca = event.detail.value; this.aplicarFiltros(); }
   cambiarFiltroDistribuidor(event: any) { this.filtroDistribuidor = event.detail.value; this.aplicarFiltros(); }
   buscarProducto(event: any) { this.textoBusqueda = event.target.value.toLowerCase(); this.aplicarFiltros(); }
+
+  limpiarBusqueda() {
+    this.textoBusqueda = '';
+    this.aplicarFiltros();
+  }
 
   aplicarFiltros() {
     let resultado = this.inventarioService.productos;
@@ -229,6 +235,14 @@ export class ProductosPage implements OnInit {
   async guardarEdicion() {
     if (!this.productoEditando.nombre || !this.productoEditando.precio) return;
 
+    // 1. Normalizamos SOLO los campos de texto libre
+    if (this.productoEditando.marca) {
+      this.productoEditando.marca = this.capitalizarTexto(this.productoEditando.marca);
+    }
+    if (this.productoEditando.distribuidor) {
+      this.productoEditando.distribuidor = this.capitalizarTexto(this.productoEditando.distribuidor);
+    }
+
     const loading = await this.loadingController.create({
       message: 'Actualizando producto...',
       spinner: 'circles'
@@ -271,4 +285,21 @@ export class ProductosPage implements OnInit {
     }
     event.target.value = this.precioFormateado;
   }
+
+  // ==========================================
+  // NORMALIZACIÓN DE TEXTOS (Title Case)
+  // ==========================================
+ capitalizarTexto(texto: string): string {
+    if (!texto) return '';
+    
+    // 1. .trim() quita espacios extras al inicio/final.
+    // 2. .toLowerCase() pone todo en minúsculas primero.
+    // 3. .split(' ') divide por espacios para tratar cada palabra.
+    // 4. .map(...) toma la primera letra (charAt(0)) y la pasa a mayúsculas, 
+    //    y suma el resto de la palabra (slice(1)).
+    return texto.trim().toLowerCase().split(' ').map(palabra => {
+      return palabra.charAt(0).toUpperCase() + palabra.slice(1);
+    }).join(' ');
+  }
+
 }

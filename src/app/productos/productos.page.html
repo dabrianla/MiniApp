@@ -3,12 +3,17 @@
     <ion-buttons slot="start">
       <ion-menu-button color="secondary"></ion-menu-button>
     </ion-buttons>
-    <ion-title color="secondary">Inventario</ion-title>
+    <ion-title color="secondary">Catalogo</ion-title>
   </ion-toolbar>
 
   <ion-toolbar color="dark">
     <div style="display: flex; align-items: center; padding-right: 10px;">
-      <ion-searchbar placeholder="Buscar nombre o código..." [(ngModel)]="textoBusqueda" (ionInput)="buscarProducto($event)" style="padding-right: 0; flex: 1;"></ion-searchbar>
+      <ion-searchbar placeholder="Buscar nombre o código..." 
+      [(ngModel)]="textoBusqueda" 
+      (ionInput)="buscarProducto($event)"
+      (ionClear)="limpiarBusqueda()"
+        showClearButton="always" 
+      style="padding-right: 0; flex: 1;"></ion-searchbar>
       
       <ion-button fill="clear" color="secondary" (click)="escanearParaBuscar()">
         <ion-icon slot="icon-only" name="barcode-outline" style="font-size: 28px;"></ion-icon>
@@ -84,7 +89,7 @@
   </div>
 
   <ion-fab *ngIf="authService.userData && !escaneando" vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button routerLink="/agregar-producto" color="secondary">
+    <ion-fab-button routerLink="/agregar-producto" color="secondary" class="btn-flotante-agregar">
       <ion-icon name="add" style="color: black;"></ion-icon>
     </ion-fab-button>
   </ion-fab>
@@ -122,6 +127,7 @@
       </ion-card>
 
       <ion-list lines="none" class="lista-info-detalle">
+        
         <ion-item color="dark" class="item-info">
           <ion-icon slot="start" name="cube-outline" color="secondary"></ion-icon>
           <ion-label>
@@ -129,6 +135,7 @@
             <h3>{{ productoDetalle.stock || 0 }} unidades</h3>
           </ion-label>
         </ion-item>
+
         <ion-item color="dark" class="item-info">
           <ion-icon slot="start" name="barcode-outline" color="secondary"></ion-icon>
           <ion-label>
@@ -136,13 +143,39 @@
             <h3>{{ productoDetalle.codigoBarras || 'N/A' }}</h3>
           </ion-label>
         </ion-item>
+
+        <ion-item color="dark" class="item-info">
+          <ion-icon slot="start" name="grid-outline" color="secondary"></ion-icon>
+          <ion-label>
+            <p>Categoría</p>
+            <h3>{{ productoDetalle.categoria || 'Sin categoría' }}</h3>
+          </ion-label>
+        </ion-item>
+
         <ion-item color="dark" class="item-info">
           <ion-icon slot="start" name="pricetag-outline" color="secondary"></ion-icon>
           <ion-label>
-            <p>Categoría / Marca</p>
-            <h3>{{ productoDetalle.categoria }} | {{ productoDetalle.marca || 'N/A' }}</h3>
+            <p>Marca del Producto</p>
+            <h3>{{ productoDetalle.marca || 'Sin marca' }}</h3>
           </ion-label>
         </ion-item>
+
+        <ion-item color="dark" class="item-info">
+          <ion-icon slot="start" name="business-outline" color="secondary"></ion-icon>
+          <ion-label>
+            <p>Proveedor / Distribuidor</p>
+            <h3>{{ productoDetalle.distribuidor || 'Sin proveedor asignado' }}</h3>
+          </ion-label>
+        </ion-item>
+
+        <ion-item color="dark" class="item-info">
+          <ion-icon slot="start" name="sparkles-outline" color="secondary"></ion-icon>
+          <ion-label>
+            <p>Condición Comercial</p>
+            <h3>{{ productoDetalle.oferta ? 'Producto en Oferta Activa' : 'Normal' }}</h3>
+          </ion-label>
+        </ion-item>
+
       </ion-list>
 
       <ion-button expand="block" fill="outline" color="secondary" class="ion-margin-top" (click)="cerrarDetalle()">
@@ -153,62 +186,90 @@
 </ion-modal>
 
 <ion-modal [isOpen]="modalAbierto" (didDismiss)="cerrarEditor()">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar color="dark">
-        <ion-title color="secondary">Editar Producto</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="cerrarEditor()">
-            <ion-icon slot="icon-only" name="close-outline" color="secondary"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+      <ng-template>
+        <ion-header class="ion-no-border">
+          <ion-toolbar color="dark">
+            <ion-title>Editar Producto</ion-title>
+            <ion-buttons slot="end">
+              <ion-button (click)="cerrarEditor()">
+                <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
 
-    <ion-content color="dark" class="ion-padding">
-      <div class="contenedor-foto-edicion" (click)="tomarFotoEdicion()">
-        <img [src]="productoEditando.imagen || 'assets/shapes.svg'" class="imagen-editor" />
-        <div class="badge-camara">
-          <ion-icon name="camera-outline"></ion-icon>
-        </div>
-      </div>
-      <p class="ion-text-center" style="color: #aaa; font-size: 0.8rem; margin-top: -10px; margin-bottom: 20px;">
-        Toca la foto para cambiarla
-      </p>
-
-      <ion-card color="secondary" class="tarjeta-precio">
-        <ion-card-content class="ion-text-center">
-          <ion-label style="color: black; font-weight: 800; font-size: 1.2rem; letter-spacing: 2px;">PRECIO DE VENTA</ion-label>
-          <div class="precio-container">
-            <span class="simbolo-peso">$</span>
-            <ion-input type="text" inputmode="numeric" [value]="precioFormateado" (ionInput)="formatearPrecioEnVivo($event)" class="input-precio-gigante"></ion-input>
+        <ion-content color="dark" class="ion-padding">
+          
+          <div class="contenedor-foto-edicion" (click)="tomarFotoEdicion()">
+            <img [src]="productoEditando.imagen || 'assets/shapes.svg'" class="imagen-editor" style="margin: 0 auto; display: block;" />
+            <div class="badge-camara">
+              <ion-icon name="camera-outline"></ion-icon>
+            </div>
           </div>
-        </ion-card-content>
-      </ion-card>
+          <p class="ion-text-center" style="color: #aaa; font-size: 0.8rem; margin-top: -10px; margin-bottom: 20px;">
+            Toca la foto para cambiarla
+          </p>
 
-      <ion-list lines="full" style="background: transparent;">
-        <ion-item color="dark">
-          <ion-label style="font-weight: bold; color: var(--ion-color-secondary);">¿Producto en Oferta?</ion-label>
-          <ion-toggle slot="end" color="secondary" [(ngModel)]="productoEditando.oferta"></ion-toggle>
-        </ion-item>
-        <ion-item color="dark">
-          <ion-input label="Nombre del Producto" labelPlacement="stacked" [(ngModel)]="productoEditando.nombre"></ion-input>
-        </ion-item>
-        <ion-item color="dark">
-          <ion-input label="Categoría" labelPlacement="stacked" [(ngModel)]="productoEditando.categoria"></ion-input>
-        </ion-item>
-        <ion-item color="dark">
-          <ion-input label="Marca" labelPlacement="stacked" [(ngModel)]="productoEditando.marca"></ion-input>
-        </ion-item>
-        <ion-item color="dark">
-          <ion-input label="Proveedor / Distribuidor" labelPlacement="stacked" [(ngModel)]="productoEditando.distribuidor"></ion-input>
-        </ion-item>
-      </ion-list>
+          <ion-card color="secondary" class="tarjeta-precio">
+            <ion-card-content class="ion-text-center">
+              <ion-label style="color: black; font-weight: 800; font-size: 1.2rem; letter-spacing: 2px;">PRECIO DE VENTA</ion-label>
+              <div class="precio-container">
+                <span class="simbolo-peso">$</span>
+                <ion-input type="text" inputmode="numeric" [value]="precioFormateado" (ionInput)="formatearPrecioEnVivo($event)" class="input-precio-gigante"></ion-input>
+              </div>
+            </ion-card-content>
+          </ion-card>
 
-      <ion-button expand="block" color="primary" class="ion-margin-top" style="height: 50px; font-weight: bold;" (click)="guardarEdicion()">
-        <ion-icon name="save-outline" slot="start"></ion-icon>
-        GUARDAR CAMBIOS
-      </ion-button>
-    </ion-content>
-  </ng-template>
-</ion-modal>
+          <ion-list lines="none" class="lista-info-detalle">
+            
+            <ion-item color="dark" class="item-info">
+              <ion-icon slot="start" name="create-outline" color="secondary"></ion-icon>
+              <ion-input label="Nombre del Producto" labelPlacement="stacked" [(ngModel)]="productoEditando.nombre" type="text" placeholder="Ej: Bebida 2L"></ion-input>
+            </ion-item>
+
+            <ion-item color="dark" class="item-info">
+              <ion-icon slot="start" name="cube-outline" color="secondary"></ion-icon>
+              <ion-input label="Stock Disponible" labelPlacement="stacked" [(ngModel)]="productoEditando.stock" type="number" placeholder="Ej: 50"></ion-input>
+            </ion-item>
+
+            <ion-item color="dark" class="item-info">
+              <ion-icon slot="start" name="barcode-outline" color="secondary"></ion-icon>
+              <ion-input label="Código de Barras" labelPlacement="stacked" [(ngModel)]="productoEditando.codigoBarras" type="text" placeholder="Ej: 789123456"></ion-input>
+            </ion-item>
+
+            <ion-item color="dark" class="item-info">
+              <ion-icon slot="start" name="grid-outline" color="secondary"></ion-icon>
+              <ion-input label="Categoría" labelPlacement="stacked" [(ngModel)]="productoEditando.categoria" type="text" placeholder="Ej: Bebidas"></ion-input>
+            </ion-item>
+
+            <ion-item color="dark" class="item-info">
+              <ion-icon slot="start" name="pricetag-outline" color="secondary"></ion-icon>
+              <ion-input label="Marca" labelPlacement="stacked" [(ngModel)]="productoEditando.marca" type="text" placeholder="Ej: Coca-Cola"></ion-input>
+            </ion-item>
+
+            <ion-item color="dark" class="item-info">
+              <ion-icon slot="start" name="business-outline" color="secondary"></ion-icon>
+              <ion-input label="Distribuidor / Proveedor" labelPlacement="stacked" [(ngModel)]="productoEditando.distribuidor" type="text" placeholder="Ej: Embotelladora Sur"></ion-input>
+            </ion-item>
+
+            <ion-item color="dark" class="item-info">
+              <ion-icon slot="start" name="sparkles-outline" color="secondary"></ion-icon>
+              <ion-toggle [(ngModel)]="productoEditando.oferta" color="secondary" justify="space-between">
+                Destacar en Oferta
+              </ion-toggle>
+            </ion-item>
+
+          </ion-list>
+
+        </ion-content>
+
+        <ion-footer class="ion-no-border">
+          <ion-toolbar color="dark" class="ion-padding-horizontal ion-padding-bottom">
+            <ion-button expand="block" color="secondary" shape="round" (click)="guardarEdicion()" style="height: 50px; font-weight: bold;">
+              <ion-icon name="save-outline" slot="start"></ion-icon>
+              Guardar Cambios
+            </ion-button>
+          </ion-toolbar>
+        </ion-footer>
+      </ng-template>
+    </ion-modal>

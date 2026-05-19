@@ -6,10 +6,10 @@ import {
   IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, 
   IonBackButton, IonItem, IonInput, IonButton, IonLabel, IonIcon,
   IonSelect, IonSelectOption, IonGrid, IonRow, IonCol, 
-  LoadingController, AlertController 
+  LoadingController, AlertController, IonCard, IonCardContent, IonList, IonToggle, IonFooter
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { barcodeOutline, cameraOutline, imageOutline, saveOutline } from 'ionicons/icons';
+import { barcodeOutline, cameraOutline, imageOutline, saveOutline, createOutline, trashOutline, closeOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, scaleOutline} from 'ionicons/icons';
 import { InventarioService, Producto } from '../services/inventario';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capacitor/camera';
@@ -22,7 +22,7 @@ import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capaci
   imports: [
     CommonModule, FormsModule, IonContent, IonHeader, IonTitle, IonToolbar, 
     IonButtons, IonBackButton, IonItem, IonInput, IonButton, IonLabel, IonIcon,
-    IonSelect, IonSelectOption, IonGrid, IonRow, IonCol
+    IonSelect, IonSelectOption, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonList, IonToggle, IonFooter
   ]
 })
 export class AgregarProductoPage {
@@ -47,7 +47,7 @@ export class AgregarProductoPage {
   private ngZone = inject(NgZone);
 
   constructor() {
-    addIcons({ barcodeOutline, cameraOutline, imageOutline, saveOutline });
+    addIcons({ barcodeOutline, cameraOutline, imageOutline, saveOutline, createOutline, trashOutline, closeOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, scaleOutline });
   }
 
   // --- 1. GUARDAR PRODUCTO ---

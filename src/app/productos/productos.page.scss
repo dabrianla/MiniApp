@@ -243,3 +243,18 @@ ion-modal ion-content {
   text-transform: uppercase;
   vertical-align: middle;
 }
+
+/* =========================================
+   DISEÑO DEL BOTÓN FLOTANTE AGREGAR (+)
+   ========================================= */
+
+.btn-flotante-agregar::part(native) {
+  /* Borde suave de 2px color negro semi-transparente */
+  background-color: var(--ion-color-primary);
+  
+  /* Si prefieres el celeste, borra la línea de arriba y usa esta: */
+  /* border: 2px solid #5ca0ff; */
+
+  /* Le damos un poco más de sombra para que "flote" por encima de las ofertas amarillas */
+  box-shadow: 0 6px 16px rgb(1, 0, 50);
+}

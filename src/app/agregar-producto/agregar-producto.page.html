@@ -7,89 +7,108 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" [class.scanner-active]="escaneando">
+<ion-content color="dark" [fullscreen]="true" [class.scanner-active]="escaneando" class="ion-padding">
   
-  <div *ngIf="!escaneando" class="ion-padding">
+  <div *ngIf="!escaneando">
     
-    <div style="text-align: center; margin-bottom: 20px;" (click)="tomarFoto()">
-      <img [src]="nuevoProducto.imagen" style="width: 150px; height: 150px; object-fit: cover; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);" />
-      <p style="color: gray; margin-top: 5px;">
-        <ion-icon name="camera-outline" style="vertical-align: middle;"></ion-icon> Tocar para cambiar foto
-      </p>
+    <div class="contenedor-foto-estilo" (click)="tomarFoto()">
+      <img [src]="nuevoProducto.imagen || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'" 
+           [class.con-foto]="nuevoProducto.imagen" 
+           class="imagen-editor" />
+      
+      <div class="overlay-camara" *ngIf="!nuevoProducto.imagen">
+        <ion-icon name="camera-outline"></ion-icon>
+        <span>Agregar Foto</span>
+      </div>
+
+      <div class="overlay-camara" *ngIf="nuevoProducto.imagen" style="background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 10px; opacity: 0.9;">
+        <ion-icon name="camera-outline"></ion-icon>
+        <span style="font-size: 0.75rem;">Cambiar</span>
+      </div>
     </div>
 
-    <ion-item lines="stacked">
-      <ion-label position="stacked">Código de Barras (Opcional)</ion-label>
-      <ion-input [(ngModel)]="nuevoProducto.codigoBarras" placeholder="Escanea o escribe"></ion-input>
-      <ion-button slot="end" fill="clear" (click)="escanearCodigo()">
-        <ion-icon name="barcode-outline"></ion-icon>
-      </ion-button>
-    </ion-item>
+    <ion-card color="secondary" class="tarjeta-escaner">
+      <ion-card-content class="ion-text-center">
+        <div (click)="escanearCodigo()" class="zona-tocar-escaner">
+          <ion-icon name="barcode-outline" style="font-size: 4rem; color: black;"></ion-icon>
+          <h2 style="color: black; font-weight: 900; margin-top: 5px; font-size: 1.3rem; letter-spacing: 1px;">ESCANEAR CÓDIGO</h2>
+          <p style="color: rgba(0,0,0,0.7); font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">
+            Recomendado para ventas rápidas
+          </p>
+        </div>
 
-    <ion-item lines="stacked">
-      <ion-label position="stacked">Nombre del Producto</ion-label>
-      <ion-input [(ngModel)]="nuevoProducto.nombre" placeholder="Ej: Coca Cola 2L"></ion-input>
-    </ion-item>
+        <div class="input-codigo-manual">
+          <ion-input [(ngModel)]="nuevoProducto.codigoBarras" placeholder="O escribe el código a mano" type="text" class="ion-text-center"></ion-input>
+        </div>
+      </ion-card-content>
+    </ion-card>
 
-    <ion-item lines="stacked">
-  <ion-label position="stacked">Marca</ion-label>
-  <ion-input [(ngModel)]="nuevoProducto.marca" placeholder="Ej: Nestlé, Soprole..."></ion-input>
-</ion-item>
+    <ion-list lines="none" class="lista-info-detalle">
+      
+      <ion-item color="dark" class="item-info">
+        <ion-icon slot="start" name="create-outline" color="secondary"></ion-icon>
+        <ion-input label="Nombre del Producto" labelPlacement="stacked" [(ngModel)]="nuevoProducto.nombre" placeholder="Ej: Coca Cola 2L"></ion-input>
+      </ion-item>
 
-<ion-item lines="stacked">
-  <ion-label position="stacked">Proveedor / Distribuidor</ion-label>
-  <ion-input [(ngModel)]="nuevoProducto.distribuidor" placeholder="Ej: Distribuidora Norte"></ion-input>
-</ion-item>
+      <ion-item color="dark" class="item-info">
+        <ion-icon slot="start" name="cash-outline" color="secondary"></ion-icon>
+        <ion-input label="Precio de Venta ($)" labelPlacement="stacked" type="number" [(ngModel)]="nuevoProducto.precio" placeholder="Ej: 1500"></ion-input>
+      </ion-item>
 
-    <ion-item lines="stacked">
-      <ion-label position="stacked">Categoría</ion-label>
-      <ion-select [(ngModel)]="nuevoProducto.categoria" interface="popover">
-        <ion-select-option value="Abarrotes">Abarrotes</ion-select-option>
-        <ion-select-option value="Botillería">Botillería</ion-select-option>
-        <ion-select-option value="Verdulería">Verdulería</ion-select-option>
-        <ion-select-option value="Panadería">Panadería</ion-select-option>
-        <ion-select-option value="Otros">Otros</ion-select-option>
-      </ion-select>
-    </ion-item>
+      <ion-item color="dark" class="item-info">
+        <ion-icon slot="start" name="cube-outline" color="secondary"></ion-icon>
+        <ion-input label="Stock Actual (Opcional)" labelPlacement="stacked" type="number" [(ngModel)]="nuevoProducto.stock" placeholder="Ej: 24"></ion-input>
+      </ion-item>
 
-    <ion-item lines="stacked">
-      <ion-label position="stacked">Se vende por:</ion-label>
-      <ion-select [(ngModel)]="nuevoProducto.medida">
-        <ion-select-option value="Unidad">Unidad</ion-select-option>
-        <ion-select-option value="Kg">Kilo (Kg)</ion-select-option>
-        <ion-select-option value="Pack">Pack</ion-select-option>
-      </ion-select>
-    </ion-item>
+      <ion-item color="dark" class="item-info">
+        <ion-icon slot="start" name="grid-outline" color="secondary"></ion-icon>
+        <ion-select label="Categoría" labelPlacement="stacked" [(ngModel)]="nuevoProducto.categoria" interface="popover">
+          <ion-select-option value="Abarrotes">Abarrotes</ion-select-option>
+          <ion-select-option value="Botillería">Botillería</ion-select-option>
+          <ion-select-option value="Verdulería">Verdulería</ion-select-option>
+          <ion-select-option value="Panadería">Panadería</ion-select-option>
+          <ion-select-option value="Otros">Otros</ion-select-option>
+        </ion-select>
+      </ion-item>
 
-    <ion-item lines="stacked">
-      <ion-label position="stacked">Precio de Venta ($)</ion-label>
-      <ion-input type="number" [(ngModel)]="nuevoProducto.precio"></ion-input>
-    </ion-item>
+      <ion-item color="dark" class="item-info">
+        <ion-icon slot="start" name="scale-outline" color="secondary"></ion-icon>
+        <ion-select label="Se vende por:" labelPlacement="stacked" [(ngModel)]="nuevoProducto.medida" interface="popover">
+          <ion-select-option value="Unidad">Unidad</ion-select-option>
+          <ion-select-option value="Kg">Kilo (Kg)</ion-select-option>
+          <ion-select-option value="Pack">Pack</ion-select-option>
+        </ion-select>
+      </ion-item>
 
-    <ion-item lines="stacked">
-      <ion-label position="stacked">Stock Actual (Opcional)</ion-label>
-      <ion-input type="number" [(ngModel)]="nuevoProducto.stock"></ion-input>
-    </ion-item>
+      <ion-item color="dark" class="item-info">
+        <ion-icon slot="start" name="pricetag-outline" color="secondary"></ion-icon>
+        <ion-input label="Marca" labelPlacement="stacked" [(ngModel)]="nuevoProducto.marca" placeholder="Ej: Nestlé"></ion-input>
+      </ion-item>
 
-    <ion-button expand="block" class="ion-margin-top" (click)="guardarProducto()" class="guardar-btn">
-      Guardar en Inventario
-    </ion-button>
+      <ion-item color="dark" class="item-info">
+        <ion-icon slot="start" name="business-outline" color="secondary"></ion-icon>
+        <ion-input label="Proveedor / Distribuidor" labelPlacement="stacked" [(ngModel)]="nuevoProducto.distribuidor" placeholder="Ej: Distribuidora Norte"></ion-input>
+      </ion-item>
+
+    </ion-list>
+    <br><br><br>
   </div>
 
   <div *ngIf="escaneando" class="scanner-overlay">
-    
     <h2 class="scanner-text">Apunta al código de barras</h2>
-    
-    <div class="scanner-box">
-      <div class="laser"></div>
-    </div>
-
+    <div class="scanner-box"><div class="laser"></div></div>
     <ion-button (click)="detenerEscaneo()" color="danger" class="btn-cancelar">
       <ion-icon slot="start" name="close-circle-outline"></ion-icon>
       Cancelar Escaneo
     </ion-button>
-
   </div>
-  <br><br><br>
-
 </ion-content>
+
+<ion-footer *ngIf="!escaneando" class="ion-no-border">
+  <ion-toolbar color="dark" class="ion-padding-horizontal ion-padding-bottom">
+    <ion-button expand="block" color="primary" shape="round" (click)="guardarProducto()" style="height: 55px; font-weight: 800; font-size: 1.1rem;">
+      <ion-icon name="save-outline" slot="start"></ion-icon>
+      Guardar en Inventario
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>
