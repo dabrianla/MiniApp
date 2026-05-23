@@ -54,10 +54,13 @@
 }
 
 /* Esta clase se activa solo cuando el escáner está abierto */
+
+/* Esto vuelve transparente el fondo de Ionic para que la cámara nativa se vea */
 body.qrscanner {
-  --ion-background-color: transparent !important;
+  background-color: transparent !important;
 }
 
-body.qrscanner ion-content {
-  --background: transparent !important;
+body.qrscanner ion-app,
+body.qrscanner ion-router-outlet {
+  background-color: transparent !important;
 }

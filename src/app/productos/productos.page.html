@@ -239,7 +239,13 @@
 
             <ion-item color="dark" class="item-info">
               <ion-icon slot="start" name="grid-outline" color="secondary"></ion-icon>
-              <ion-input label="Categoría" labelPlacement="stacked" [(ngModel)]="productoEditando.categoria" type="text" placeholder="Ej: Bebidas"></ion-input>
+              <ion-select label="Categoría" labelPlacement="stacked" [(ngModel)]="productoEditando.categoria" interface="popover" placeholder="Selecciona una categoría">
+                <ion-select-option value="Abarrotes">Abarrotes</ion-select-option>
+                <ion-select-option value="Botillería">Botillería</ion-select-option>
+                <ion-select-option value="Verdulería">Verdulería</ion-select-option>
+                <ion-select-option value="Panadería">Panadería</ion-select-option>
+                <ion-select-option value="Otros">Otros</ion-select-option>
+              </ion-select>
             </ion-item>
 
             <ion-item color="dark" class="item-info">
