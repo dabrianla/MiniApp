@@ -1,0 +1,120 @@
+<ion-header [translucent]="true" *ngIf="!escaneando">
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-menu-button color="secondary"></ion-menu-button>
+    </ion-buttons>
+    <ion-title color="secondary">Caja / Ventas</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [style.--background]="escaneando ? 'transparent' : 'var(--ion-color-dark)'" [fullscreen]="true" class="ion-padding">
+  
+  <div *ngIf="!escaneando">
+    <ion-button expand="block" color="secondary" class="ion-margin-bottom" style="height: 60px;" (click)="escanearParaVender()">
+      <ion-icon name="barcode-outline" slot="start"></ion-icon>
+      <b>ESCANEAR PRODUCTO</b>
+    </ion-button>
+
+    <ion-searchbar 
+      mode="ios"
+      [(ngModel)]="terminoBusqueda" 
+      (ionInput)="buscarProducto($event)" 
+      placeholder="O busca por nombre..." 
+      color="dark" 
+      class="ion-no-padding ion-margin-bottom">
+    </ion-searchbar>
+
+   <ion-list *ngIf="productosFiltrados.length > 0" lines="full" style="background: var(--ion-color-dark); border-radius: 10px; margin-bottom: 20px;">
+      <ion-item *ngFor="let prod of productosFiltrados" button 
+          color="dark"
+          class="item-presionable"
+          (mousedown)="iniciarPresion(prod, $event)" 
+          (touchstart)="iniciarPresion(prod, $event)" 
+          (mousemove)="cancelarSiSeMueve($event)" 
+          (touchmove)="cancelarSiSeMueve($event)" 
+          (contextmenu)="prevenirMenu($event)"
+          (click)="agregarDesdeBuscador(prod, $event)">
+        
+        <ion-thumbnail slot="start">
+          <img [src]="prod.imagen || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'" style="border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1);" />
+        </ion-thumbnail>
+
+        <ion-label>
+          <h2 style="color: white; font-weight: bold;">{{ prod.nombre }}</h2>
+          <p style="color: var(--ion-color-secondary);">{{ prod.marca || 'Sin marca' }} | ${{ prod.precio }}</p>
+        </ion-label>
+        
+        <ion-icon name="add-circle-outline" slot="end" color="secondary" style="font-size: 1.8rem;"></ion-icon>
+      </ion-item>
+    </ion-list>
+
+    <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;" *ngIf="carrito.length > 0"></div>
+
+    <div *ngIf="carrito.length === 0 && productosFiltrados.length === 0" class="ion-text-center ion-padding" style="margin-top: 30px; opacity: 0.5;">
+      <ion-icon name="cart-outline" style="font-size: 5rem; color: white;"></ion-icon>
+      <h3 style="color: white;">El carrito está vacío</h3>
+      <p style="color: white;">Escanea o busca productos para agregarlos.</p>
+    </div>
+
+    <ion-list *ngIf="carrito.length > 0" lines="full" style="background: transparent;">
+      <ion-item *ngFor="let item of carrito; let i = index" color="dark">
+        
+        <ion-thumbnail slot="start">
+          <img [src]="item.producto.imagen || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'" style="border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1);" />
+        </ion-thumbnail>
+
+        <ion-label>
+          <h2 style="font-weight: bold; font-size: 1.1rem; color: white;">{{ item.producto.nombre }}</h2>
+          <p style="color: var(--ion-color-secondary); font-weight: bold;">
+            {{ item.producto.marca || 'Sin marca' }} | ${{ item.producto.precio }} c/u
+          </p>
+        </ion-label>
+        
+        <div slot="end" style="display: flex; align-items: center; gap: 10px;">
+          <ion-icon name="remove-circle-outline" style="font-size: 1.8rem; color: #ff4961;" (click)="cambiarCantidad(i, -1)"></ion-icon>
+          <span style="font-size: 1.2rem; font-weight: bold; width: 20px; text-align: center; color: white;">
+            {{ item.cantidad }}
+          </span>
+          <ion-icon name="add-circle-outline" style="font-size: 1.8rem; color: var(--ion-color-secondary);" (click)="cambiarCantidad(i, 1)"></ion-icon>
+        </div>
+      </ion-item>
+    </ion-list>
+  </div>
+
+  <div *ngIf="escaneando" class="scanner-overlay">
+    <h2 class="scanner-text" style="color: white; text-align: center; margin-top: 100px;">Apunta al código para vender</h2>
+    <div class="scanner-box" style="border: 2px solid var(--ion-color-secondary); width: 250px; height: 250px; margin: 50px auto; position: relative;">
+      <div class="laser" style="width: 100%; height: 2px; background: red; position: absolute; top: 50%;"></div>
+    </div>
+    <ion-button expand="block" (click)="detenerEscaneo()" color="danger" style="margin: 20px;">
+      Cancelar Escaneo
+    </ion-button>
+  </div>
+
+  <div class="instagram-overlay" [class.activo]="previewActivo" (click)="terminarPresion()">
+       
+    <div class="instagram-popup" *ngIf="productoPreview">
+      <img [src]="productoPreview.imagen || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'" />
+      <div class="info-popup">
+        <h2>{{ productoPreview.nombre }}</h2>
+        <p class="marca">{{ productoPreview.marca || 'Sin marca registrada' }}</p>
+        <h3 class="precio">${{ productoPreview.precio }}</h3>
+      </div>
+    </div>
+  </div>
+
+</ion-content>
+
+<ion-footer *ngIf="!escaneando && carrito.length > 0" class="ion-no-border">
+  <ion-toolbar color="dark" class="ion-padding">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <span style="font-size: 1.2rem; color: white;">Total a Pagar:</span>
+      <span style="font-size: 1.8rem; font-weight: 900; color: var(--ion-color-secondary);">${{ total }}</span>
+    </div>
+    
+    <ion-button expand="block" color="primary" shape="round" style="height: 55px; font-weight: 800; font-size: 1.1rem;" (click)="confirmarVenta()">
+      <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+      CONFIRMAR Y COBRAR
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>

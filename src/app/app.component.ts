@@ -7,11 +7,12 @@ import {
   mailOutline, mailSharp, cubeOutline, cubeSharp, paperPlaneOutline, paperPlaneSharp, 
   heartOutline, heartSharp, archiveOutline, archiveSharp, trashOutline, trashSharp, 
   warningOutline, warningSharp, bookmarkOutline, bookmarkSharp, lockClosedOutline, 
-  lockClosedSharp, logOutOutline, logOutSharp
+  lockClosedSharp, logOutOutline, logOutSharp, addCircleOutline, cartOutline, listOutline, cartSharp
 } from 'ionicons/icons';
 import { AuthService } from './services/auth';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { Camera } from '@capacitor/camera';
+
 
 @Component({
   selector: 'app-root',
@@ -57,9 +58,10 @@ export class AppComponent {
   
   // Lista de páginas del menú lateral (ajustado a tu app real)
   public appPages = [
-    { title: 'Inventario de Productos', url: '/productos', icon: 'cube' },
+    { title: 'Catalogo de productos', url: '/productos', icon: 'cube' },
     // Más adelante puedes descomentar y usar estas cuando las creemos:
-    // { title: 'Ventas', url: '/ventas', icon: 'archive' },
+    { title: 'Punto de venta', url: '/punto-venta', icon: 'cart' },
+    { title: 'Alertas y Novedades', url: '/notificaciones', icon: 'warning' },
     // { title: 'Notificaciones', url: '/alertas', icon: 'warning' },
   ];
   
@@ -69,7 +71,7 @@ export class AppComponent {
       mailOutline, mailSharp, cubeOutline, cubeSharp, paperPlaneOutline, paperPlaneSharp, 
       heartOutline, heartSharp, archiveOutline, archiveSharp, trashOutline, trashSharp, 
       warningOutline, warningSharp, bookmarkOutline, bookmarkSharp, lockClosedOutline, 
-      lockClosedSharp, logOutOutline, logOutSharp 
+      lockClosedSharp, logOutOutline, logOutSharp, addCircleOutline, cartOutline, listOutline, cartSharp
     });
   }
 

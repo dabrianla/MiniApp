@@ -9,7 +9,7 @@ import {
   LoadingController, AlertController, IonCard, IonCardContent, IonList, IonToggle, IonFooter
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { barcodeOutline, cameraOutline, imageOutline, saveOutline, createOutline, trashOutline, closeOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, scaleOutline} from 'ionicons/icons';
+import { barcodeOutline, cameraOutline, imageOutline, saveOutline, createOutline, trashOutline, closeOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, scaleOutline, alertCircleOutline, calendarClearOutline} from 'ionicons/icons';
 import { InventarioService, Producto } from '../services/inventario';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capacitor/camera';
@@ -35,7 +35,9 @@ export class AgregarProductoPage {
     stock: null,
     precio: null,
     distribuidor: '',
-    imagen: ''
+    imagen: '',
+    stockMinimo: null,
+    fechaVencimiento: null
   };
 
   escaneando: boolean = false;
@@ -47,7 +49,7 @@ export class AgregarProductoPage {
   private ngZone = inject(NgZone);
 
   constructor() {
-    addIcons({ barcodeOutline, cameraOutline, imageOutline, saveOutline, createOutline, trashOutline, closeOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, scaleOutline });
+    addIcons({ barcodeOutline, cameraOutline, imageOutline, saveOutline, createOutline, trashOutline, closeOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, scaleOutline, alertCircleOutline, calendarClearOutline });
   }
 
   // --- 1. GUARDAR PRODUCTO ---

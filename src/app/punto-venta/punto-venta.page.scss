@@ -1,0 +1,79 @@
+/* Evita que el texto o la imagen se seleccionen al mantener apretado */
+.item-presionable {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 🟢 ESTILOS DEL POPUP INSTAGRAM */
+.instagram-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px); /* El efecto cristal/desenfoque de iOS */
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+
+  &.activo {
+    opacity: 1;
+    pointer-events: auto;
+
+    .instagram-popup {
+      transform: scale(1); /* Efecto de salto hacia adelante */
+    }
+  }
+}
+
+.instagram-popup {
+  background: var(--ion-color-dark);
+  border-radius: 24px;
+  padding: 20px;
+  width: 85%;
+  max-width: 350px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  transform: scale(0.7);
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Rebote elegante */
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+
+  img {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    border-radius: 16px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+
+  h2 {
+    color: white;
+    font-weight: 900;
+    margin: 0 0 5px 0;
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+
+  .marca {
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .precio {
+    color: var(--ion-color-secondary);
+    font-size: 2.2rem;
+    font-weight: 900;
+    margin: 0;
+  }
+
+  .instagram-popup {
+  // ... (tus estilos actuales)
+  pointer-events: none; // 🟢 Esto evita que el popup se robe los eventos táctiles
+}
+}

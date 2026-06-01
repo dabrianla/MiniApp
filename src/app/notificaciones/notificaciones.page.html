@@ -1,0 +1,66 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Alertas</ion-title>
+    
+    <ion-buttons slot="end" *ngIf="esAdmin && vistaActual === 'admin'">
+      <ion-button (click)="abrirConfiguracion()">
+        <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <ion-toolbar *ngIf="esAdmin" color="primary">
+    <ion-segment [(ngModel)]="vistaActual" mode="ios">
+      <ion-segment-button value="admin">
+        <ion-label>Panel Admin</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="chat">
+        <ion-label>Vista Empleado</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content color="light">
+
+  <div class="admin-container" *ngIf="vistaActual === 'admin'">
+    <div class="header-resumen">
+      <p>Productos próximos a vencer ordenados por urgencia.</p>
+    </div>
+
+    <ion-list inset="true">
+      <ion-item *ngFor="let prod of productosPorVencer">
+        
+        <ion-icon [color]="getColorBadge(calcularDias(prod.fechaVencimiento))" name="time-outline" slot="start"></ion-icon>
+        
+        <ion-label>
+          <h2 style="font-weight: bold;">{{ prod.nombre }}</h2>
+          <p>Stock actual: {{ prod.stock }} unid.</p>
+        </ion-label>
+
+        <div slot="end" class="dias-badge">
+          <ion-badge [color]="getColorBadge(calcularDias(prod.fechaVencimiento))">
+            <span *ngIf="calcularDias(prod.fechaVencimiento) > 0">En {{ calcularDias(prod.fechaVencimiento) }} días</span>
+            <span *ngIf="calcularDias(prod.fechaVencimiento) === 0">Vence Hoy</span>
+            <span *ngIf="calcularDias(prod.fechaVencimiento) < 0">Vencido</span>
+          </ion-badge>
+          <ion-note class="fecha-nota">{{ prod.fechaVencimiento | date:'dd/MM/yyyy' }}</ion-note>
+        </div>
+
+      </ion-item>
+    </ion-list>
+  </div>
+
+  <div class="chat-container" *ngIf="vistaActual === 'chat'">
+    <div class="fecha-separador">Últimas alertas del sistema</div>
+
+    <div *ngFor="let alerta of alertas" class="chat-bubble" [ngClass]="alerta.tipo">
+      <div class="mensaje">{{ alerta.mensaje }}</div>
+      <div class="hora">{{ alerta.fecha }}</div>
+    </div>
+  </div>
+
+</ion-content>

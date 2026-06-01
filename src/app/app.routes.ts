@@ -23,4 +23,12 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () => import('./login/login.page').then( m => m.LoginPage)
   },
+  {
+    path: 'punto-venta',
+    loadComponent: () => import('./punto-venta/punto-venta.page').then( m => m.PuntoVentaPage)
+  },
+  {
+    path: 'notificaciones',
+    loadComponent: () => import('./notificaciones/notificaciones.page').then( m => m.NotificacionesPage)
+  },
 ];

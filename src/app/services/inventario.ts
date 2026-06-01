@@ -15,6 +15,8 @@ export interface Producto {
   distribuidor?: string;
   imagen: string;
   oferta?: boolean;
+  fechaVencimiento?: string | null; 
+  stockMinimo?: number | null;
 }
 
 @Injectable({
@@ -94,6 +96,39 @@ export class InventarioService {
     // Separamos el 'id' del resto de los datos para no enviarlo doble
     const { id: _, ...datos } = datosActualizados; 
     return updateDoc(productoDocRef, datos);
+  }
+
+  // FASE 2:  Procesar la venta y descontar del stock
+  async procesarVenta(carrito: any[], totalCobrado: number) {
+    try {
+      // 1. Descontar el stock de cada producto vendido
+      for (const item of carrito) {
+        if (item.producto.stock !== null) {
+          const nuevoStock = item.producto.stock - item.cantidad;
+          const productoRef = doc(this.firestore, `productos/${item.producto.id}`);
+          await updateDoc(productoRef, { stock: nuevoStock });
+        }
+      }
+
+      // 2. Guardar el "ticket" de la venta para el historial
+      const ventasRef = collection(this.firestore, 'ventas');
+      const nuevaVenta = {
+        fecha: new Date().toISOString(),
+        items: carrito.map(item => ({
+          nombre: item.producto.nombre,
+          cantidad: item.cantidad,
+          precioUnitario: item.producto.precio,
+          subtotal: item.producto.precio * item.cantidad
+        })),
+        total: totalCobrado
+      };
+      await addDoc(ventasRef, nuevaVenta);
+
+      return true;
+    } catch (error) {
+      console.error("Error al procesar la venta:", error);
+      throw error;
+    }
   }
 
 }

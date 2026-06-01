@@ -61,6 +61,16 @@
       </ion-item>
 
       <ion-item color="dark" class="item-info">
+        <ion-icon slot="start" name="alert-circle-outline" color="secondary"></ion-icon>
+        <ion-input label="Stock Mínimo (Avisarme si hay menos de:)" labelPlacement="stacked" type="number" [(ngModel)]="nuevoProducto.stockMinimo" placeholder="Ej: 5"></ion-input>
+      </ion-item>
+
+      <ion-item color="dark" class="item-info">
+        <ion-icon slot="start" name="calendar-outline" color="secondary"></ion-icon>
+        <ion-input label="Fecha de Vencimiento (Opcional)" labelPlacement="stacked" type="date" [(ngModel)]="nuevoProducto.fechaVencimiento"></ion-input>
+      </ion-item>
+
+      <ion-item color="dark" class="item-info">
         <ion-icon slot="start" name="grid-outline" color="secondary"></ion-icon>
         <ion-select label="Categoría" labelPlacement="stacked" [(ngModel)]="nuevoProducto.categoria" interface="popover">
           <ion-select-option value="Abarrotes">Abarrotes</ion-select-option>
