@@ -1,5 +1,5 @@
 <ion-header class="ion-no-border">
-  <ion-toolbar color="primary">
+  <ion-toolbar color="secondary">
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
@@ -12,7 +12,7 @@
     </ion-buttons>
   </ion-toolbar>
 
-  <ion-toolbar *ngIf="esAdmin" color="primary">
+  <ion-toolbar *ngIf="esAdmin" color="secondary">
     <ion-segment [(ngModel)]="vistaActual" mode="ios">
       <ion-segment-button value="admin">
         <ion-label>Panel Admin</ion-label>
@@ -27,37 +27,72 @@
 <ion-content color="light">
 
   <div class="admin-container" *ngIf="vistaActual === 'admin'">
-    <div class="header-resumen">
-      <p>Productos próximos a vencer ordenados por urgencia.</p>
+    
+    <ion-segment [(ngModel)]="filtroAdmin" mode="ios" class="segment-admin">
+      <ion-segment-button value="vencimientos">
+        <ion-label>Vencimientos</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="stock">
+        <ion-label>Control de Stock</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+
+    <div *ngIf="filtroAdmin === 'vencimientos'">
+      <div class="header-resumen">
+        <p>Próximos a vencer ordenados por urgencia.</p>
+      </div>
+
+      <ion-list inset="true">
+        <ion-item *ngFor="let prod of productosPorVencer" button detail="true" (click)="irAlProducto({producto: prod})">
+          <ion-icon [color]="getColorBadge(calcularDias(prod.fechaVencimiento))" name="time-outline" slot="start"></ion-icon>
+          <ion-label>
+            <h2 style="font-weight: bold;">{{ prod.nombre }}</h2>
+            <p>Stock actual: {{ prod.stock }} unid.</p>
+          </ion-label>
+
+          <div slot="end" class="dias-badge">
+            <ion-badge [color]="getColorBadge(calcularDias(prod.fechaVencimiento))">
+              <span *ngIf="calcularDias(prod.fechaVencimiento) > 0">En {{ calcularDias(prod.fechaVencimiento) }} días</span>
+              <span *ngIf="calcularDias(prod.fechaVencimiento) === 0">Vence Hoy</span>
+              <span *ngIf="calcularDias(prod.fechaVencimiento) < 0">Vencido</span>
+            </ion-badge>
+            <ion-note class="fecha-nota">{{ obtenerFecha(prod.fechaVencimiento) | date:'dd/MM/yyyy' }}</ion-note>
+          </div>
+        </ion-item>
+      </ion-list>
     </div>
 
-    <ion-list inset="true">
-      <ion-item *ngFor="let prod of productosPorVencer">
-        
-        <ion-icon [color]="getColorBadge(calcularDias(prod.fechaVencimiento))" name="time-outline" slot="start"></ion-icon>
-        
-        <ion-label>
-          <h2 style="font-weight: bold;">{{ prod.nombre }}</h2>
-          <p>Stock actual: {{ prod.stock }} unid.</p>
-        </ion-label>
+    <div *ngIf="filtroAdmin === 'stock'">
+      <div class="header-resumen">
+        <p>Inventario ordenado por cantidad disponible.</p>
+      </div>
 
-        <div slot="end" class="dias-badge">
-          <ion-badge [color]="getColorBadge(calcularDias(prod.fechaVencimiento))">
-            <span *ngIf="calcularDias(prod.fechaVencimiento) > 0">En {{ calcularDias(prod.fechaVencimiento) }} días</span>
-            <span *ngIf="calcularDias(prod.fechaVencimiento) === 0">Vence Hoy</span>
-            <span *ngIf="calcularDias(prod.fechaVencimiento) < 0">Vencido</span>
-          </ion-badge>
-          <ion-note class="fecha-nota">{{ prod.fechaVencimiento | date:'dd/MM/yyyy' }}</ion-note>
-        </div>
+      <ion-list inset="true">
+        <ion-item *ngFor="let prod of productosPorStock" button detail="true" (click)="irAlProducto({producto: prod})">
+          <ion-icon [color]="getColorStock(prod.stock, prod.stockMinimo)" name="cube-outline" slot="start"></ion-icon>
+          
+          <ion-label>
+            <h2 style="font-weight: bold;">{{ prod.nombre }}</h2>
+            <p *ngIf="prod.stockMinimo !== null">Mínimo ideal: {{ prod.stockMinimo }} unid.</p>
+            <p *ngIf="prod.stockMinimo === null">Sin alerta mínima configurada</p>
+          </ion-label>
 
-      </ion-item>
-    </ion-list>
+          <div slot="end" class="dias-badge">
+            <ion-badge [color]="getColorStock(prod.stock, prod.stockMinimo)">
+              {{ prod.stock }} {{ prod.medida || 'unid.' }}
+            </ion-badge>
+            <ion-note class="fecha-nota" *ngIf="prod.stock !== null && prod.stock <= 0">Agotado</ion-note>
+          </div>
+        </ion-item>
+      </ion-list>
+    </div>
+
   </div>
 
   <div class="chat-container" *ngIf="vistaActual === 'chat'">
     <div class="fecha-separador">Últimas alertas del sistema</div>
 
-    <div *ngFor="let alerta of alertas" class="chat-bubble" [ngClass]="alerta.tipo">
+    <div *ngFor="let alerta of alertas" class="chat-bubble" [ngClass]="alerta.tipo" (click)="irAlProducto(alerta)">
       <div class="mensaje">{{ alerta.mensaje }}</div>
       <div class="hora">{{ alerta.fecha }}</div>
     </div>

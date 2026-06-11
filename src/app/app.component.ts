@@ -25,6 +25,32 @@ import { Camera } from '@capacitor/camera';
   ],
 })
 export class AppComponent {
+  
+  // Inyectamos el servicio de usuarios
+  public authService = inject(AuthService);
+  public platform = inject(Platform);
+  
+  // 🟢 AQUÍ AGREGAMOS LA NUEVA PÁGINA "Ingreso de Stock"
+  public appPages = [
+    { title: 'Catalogo de productos', url: '/productos', icon: 'cube' },
+    { title: 'Punto de venta', url: '/punto-venta', icon: 'cart' },
+    { title: 'Ingreso de Stock', url: '/ingreso-stock', icon: 'archive' }, 
+    { title: 'Alertas y Novedades', url: '/notificaciones', icon: 'warning' },
+  ];
+  
+  constructor() {
+    // Registro de los íconos de Ionic
+    addIcons({ 
+      mailOutline, mailSharp, cubeOutline, cubeSharp, paperPlaneOutline, paperPlaneSharp, 
+      heartOutline, heartSharp, archiveOutline, archiveSharp, trashOutline, trashSharp, 
+      warningOutline, warningSharp, bookmarkOutline, bookmarkSharp, lockClosedOutline, 
+      lockClosedSharp, logOutOutline, logOutSharp, addCircleOutline, cartOutline, listOutline, cartSharp
+    });
+
+    // 🟢 ESTO FALTABA: Ejecutamos la función para que pida la cámara al abrir la app
+    this.iniciarApp();
+  }
+
   async iniciarApp() {
     // Esperamos a que el sistema operativo del celular esté listo
     await this.platform.ready();
@@ -38,44 +64,19 @@ export class AppComponent {
       // 1. Pide permiso para el escáner de códigos de barras
       const statusEscaner = await BarcodeScanner.checkPermission({ force: true });
       
-      // 2. Pide permiso para la cámara de fotos (por si el de arriba no cubre ambos en algún dispositivo)
+      // 2. Pide permiso para la cámara de fotos
       await Camera.requestPermissions();
 
       if (statusEscaner.granted) {
         console.log('Permisos de cámara concedidos correctamente al iniciar.');
       } else {
         console.warn('El usuario denegó los permisos de la cámara.');
-        // Aquí en el futuro podrías mostrar una alerta diciendo que la app necesita la cámara para funcionar.
       }
     } catch (error) {
       console.error('Error al solicitar permisos:', error);
     }
   }
-  
-  // Inyectamos el servicio de usuarios
-  public authService = inject(AuthService);
-  public platform = inject(Platform);
-  
-  // Lista de páginas del menú lateral (ajustado a tu app real)
-  public appPages = [
-    { title: 'Catalogo de productos', url: '/productos', icon: 'cube' },
-    // Más adelante puedes descomentar y usar estas cuando las creemos:
-    { title: 'Punto de venta', url: '/punto-venta', icon: 'cart' },
-    { title: 'Alertas y Novedades', url: '/notificaciones', icon: 'warning' },
-    // { title: 'Notificaciones', url: '/alertas', icon: 'warning' },
-  ];
-  
-  constructor() {
-    // Registro de los íconos de Ionic
-    addIcons({ 
-      mailOutline, mailSharp, cubeOutline, cubeSharp, paperPlaneOutline, paperPlaneSharp, 
-      heartOutline, heartSharp, archiveOutline, archiveSharp, trashOutline, trashSharp, 
-      warningOutline, warningSharp, bookmarkOutline, bookmarkSharp, lockClosedOutline, 
-      lockClosedSharp, logOutOutline, logOutSharp, addCircleOutline, cartOutline, listOutline, cartSharp
-    });
-  }
 
-  // 2. Función indispensable para el botón rojo del HTML
   cerrarSesion() {
     this.authService.logout();
   }

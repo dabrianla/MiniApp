@@ -110,3 +110,57 @@
     }
   }
 }
+
+/* Color para Alertas de Stock Bajo */
+.stock { 
+  background-color: #f3e5f5; /* Moradito pastel */
+  border-left: 5px solid #9c27b0; /* Morado fuerte */
+}
+
+/* Busca .chat-bubble y agrégale el cursor y el :active */
+.chat-bubble {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  position: relative;
+  align-self: flex-start;
+  
+  cursor: pointer; /* 🟢 Cambia el mouse a una manito */
+  transition: transform 0.1s ease; /* 🟢 Animación suave */
+
+  /* 🟢 Efecto de hundimiento cuando se toca en el celular */
+  &:active {
+    transform: scale(0.97);
+    opacity: 0.8;
+  }
+
+  .mensaje { font-size: 15px; font-weight: 500; color: #333; margin-bottom: 6px; line-height: 1.4; }
+  .hora { font-size: 11px; color: rgba(0,0,0,0.5); text-align: right; }
+}
+
+/* Estilos para el sub-menu del Admin */
+/* Estilos para el sub-menu del Admin */
+.segment-admin {
+  margin: 10px 16px;
+  width: calc(100% - 32px);
+  background: #eef0f3; /* Un fondo gris claro muy sutil y elegante */
+  padding: 3px; /* Pequeño margen interno para que la pastilla no toque los bordes */
+  border-radius: 12px; /* Bordes redondeados modernos */
+
+  ion-segment-button {
+    /* 🟢 1. COLOR DEL TEXTO SIN SELECCIONAR (Gris oscuro para que se lea perfecto) */
+    --color: #666666; 
+
+    /* 🟢 2. COLOR DEL TEXTO SELECCIONADO (Blanco para que resalte) */
+    --color-checked: #ffffff; 
+
+    /* 🟢 3. COLOR DE LA PASTILLA QUE SE MUEVE (Usa tu color principal) */
+    --indicator-color: var(--ion-color-primary); 
+    
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.3px;
+  }
+}

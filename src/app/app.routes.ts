@@ -31,4 +31,8 @@ export const routes: Routes = [
     path: 'notificaciones',
     loadComponent: () => import('./notificaciones/notificaciones.page').then( m => m.NotificacionesPage)
   },
+  {
+    path: 'ingreso-stock',
+    loadComponent: () => import('./ingreso-stock/ingreso-stock.page').then( m => m.IngresoStockPage)
+  },
 ];

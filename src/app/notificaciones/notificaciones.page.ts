@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { 
   IonContent, IonHeader, IonTitle, IonToolbar, 
   IonButtons, IonMenuButton, IonIcon, IonButton,
@@ -8,7 +9,12 @@ import {
   IonList, IonItem, IonBadge, IonNote
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { settingsOutline, timeOutline, alertCircleOutline } from 'ionicons/icons';
+// 🟢 Agregamos el ícono "cubeOutline" para el stock
+import { settingsOutline, timeOutline, alertCircleOutline, cubeOutline } from 'ionicons/icons';
+
+import { InventarioService, Producto } from '../services/inventario';
+import { AuthService } from '../services/auth';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-notificaciones',
@@ -23,59 +29,126 @@ import { settingsOutline, timeOutline, alertCircleOutline } from 'ionicons/icons
     IonList, IonItem, IonBadge, IonNote
   ]
 })
-export class NotificacionesPage implements OnInit {
+export class NotificacionesPage implements OnInit, OnDestroy {
   
-  // Variable para simular si es admin (luego la conectaremos a tu AuthService)
+  public inventarioService = inject(InventarioService);
+  public authService = inject(AuthService);
+  public router = inject(Router);
+
+  private subscripcionInventario!: Subscription;
+
   esAdmin: boolean = true; 
-  // Controla qué pestaña se está viendo
   vistaActual: string = 'admin'; 
+  filtroAdmin: string = 'vencimientos'; // 🟢 Controla si vemos Vencimientos o Stock
 
-  // --- DATOS VISTA EMPLEADO (CHAT) ---
-  alertas = [
-    { tipo: 'vencimiento', mensaje: 'El producto "Yogurth Soprole" está por vencer en 3 días.', fecha: 'Hoy, 08:30 AM' },
-    { tipo: 'oferta', mensaje: 'Se ha actualizado una oferta: "Plátano" ahora está a $900 el kg.', fecha: 'Ayer, 15:45 PM' },
-    { tipo: 'nuevo', mensaje: 'Nuevo producto agregado: "Chocolate Trencito 90g" a $1.200.', fecha: 'Ayer, 10:15 AM' }
-  ];
-
-  // --- DATOS VISTA ADMIN (LISTA PROFESIONAL) ---
-  // (Usamos fechas reales para que el sistema calcule los días automáticamente)
-  productosPorVencer = [
-    { nombre: 'Leche Colun', stock: 8, fechaVencimiento: new Date(Date.now() + 5 * 86400000) }, // En 5 días
-    { nombre: 'Queso Laminado', stock: 4, fechaVencimiento: new Date(Date.now() - 1 * 86400000) }, // Vencido hace 1 día
-    { nombre: 'Yogurth Soprole', stock: 15, fechaVencimiento: new Date(Date.now() + 2 * 86400000) }, // En 2 días
-    { nombre: 'Mantequilla', stock: 10, fechaVencimiento: new Date(Date.now() + 12 * 86400000) }, // En 12 días
-  ];
+  productosPorVencer: Producto[] = [];
+  productosPorStock: Producto[] = [];   // 🟢 Nueva lista para el stock
+  alertas: any[] = []; 
 
   constructor() {
-    // Agregamos íconos nuevos para la lista
-    addIcons({ settingsOutline, timeOutline, alertCircleOutline });
+    addIcons({ settingsOutline, timeOutline, alertCircleOutline, cubeOutline });
   }
 
   ngOnInit() {
-    this.ordenarProductosPorVencimiento();
+    this.subscripcionInventario = this.inventarioService.productos$.subscribe(() => {
+      this.procesarDatos();
+    });
+    this.procesarDatos();
   }
 
-  // Ordena la lista para que los más urgentes salgan arriba
-  ordenarProductosPorVencimiento() {
-    this.productosPorVencer.sort((a, b) => a.fechaVencimiento.getTime() - b.fechaVencimiento.getTime());
+  ngOnDestroy() {
+    if (this.subscripcionInventario) {
+      this.subscripcionInventario.unsubscribe();
+    }
   }
 
-  // Calcula la diferencia en días desde hoy hasta la fecha de vencimiento
-  calcularDias(fecha: Date): number {
+  procesarDatos() {
+    const todosLosProductos = this.inventarioService.productos;
+    
+    // --- 1A. PANEL ADMIN: VENCIMIENTOS ---
+    const productosConVencimiento = todosLosProductos.filter(p => p.fechaVencimiento);
+    this.productosPorVencer = productosConVencimiento.sort((a, b) => {
+      const fechaA = this.obtenerFecha(a.fechaVencimiento).getTime();
+      const fechaB = this.obtenerFecha(b.fechaVencimiento).getTime();
+      return fechaA - fechaB;
+    });
+
+    // --- 1B. PANEL ADMIN: STOCK ---
+    // Filtramos solo los que llevan control de stock y los ordenamos de menor a mayor
+    this.productosPorStock = todosLosProductos
+      .filter(p => p.stock !== null && p.stock !== undefined)
+      .sort((a, b) => (a.stock || 0) - (b.stock || 0));
+
+    // --- 2. VISTA EMPLEADO: CHAT ---
+    this.generarChatEmpleado(todosLosProductos);
+  }
+
+  generarChatEmpleado(productos: Producto[]) {
+    this.alertas = []; 
+    productos.forEach(prod => {
+      if (prod.fechaVencimiento) {
+        const dias = this.calcularDias(prod.fechaVencimiento);
+        if (dias <= 7 && dias > 0) {
+          this.alertas.push({ tipo: 'vencimiento', mensaje: `El producto "${prod.nombre}" está por vencer en ${dias} días.`, fecha: 'Sistema', producto: prod });
+        } else if (dias <= 0) {
+          this.alertas.push({ tipo: 'vencimiento', mensaje: `¡El producto "${prod.nombre}" vence hoy o ya está vencido!`, fecha: 'Urgente', producto: prod });
+        }
+      }
+      if (prod.oferta) {
+        this.alertas.push({ tipo: 'oferta', mensaje: `Producto en Oferta: "${prod.nombre}" a $${this.formatearPrecio(prod.precio)}.`, fecha: 'Promoción', producto: prod });
+      }
+      if (prod.stockMinimo !== null && prod.stockMinimo !== undefined && prod.stock !== null) {
+        if (prod.stock <= prod.stockMinimo) {
+          this.alertas.push({ tipo: 'stock', mensaje: `Stock bajo detectado: Solo quedan ${prod.stock} unidades de "${prod.nombre}".`, fecha: 'Inventario', producto: prod });
+        }
+      }
+    });
+  }
+
+  irAlProducto(alerta: any) {
+    if (alerta.producto) {
+      const termino = alerta.producto.codigoBarras || alerta.producto.nombre;
+      this.router.navigate(['/productos'], { queryParams: { buscar: termino } });
+    }
+  }
+
+  obtenerFecha(fechaVal: any): Date {
+    if (!fechaVal) return new Date(0);
+    if (typeof fechaVal.toDate === 'function') return fechaVal.toDate();
+    return new Date(fechaVal);
+  }
+
+  calcularDias(fechaVal: any): number {
+    if (!fechaVal) return 999;
+    const fechaVencimiento = this.obtenerFecha(fechaVal);
     const hoy = new Date();
-    const diferencia = fecha.getTime() - hoy.getTime();
+    hoy.setHours(0, 0, 0, 0);
+    fechaVencimiento.setHours(0, 0, 0, 0);
+    const diferencia = fechaVencimiento.getTime() - hoy.getTime();
     return Math.ceil(diferencia / (1000 * 3600 * 24));
   }
 
-  // Devuelve un color según la urgencia
   getColorBadge(dias: number): string {
-    if (dias < 0) return 'dark';     // Negro si ya venció
-    if (dias <= 3) return 'danger';  // Rojo si faltan 3 días o menos
-    if (dias <= 7) return 'warning'; // Amarillo si faltan 7 días o menos
-    return 'success';                // Verde si falta más tiempo
+    if (dias < 0) return 'dark';     
+    if (dias <= 3) return 'danger';  
+    if (dias <= 7) return 'warning'; 
+    return 'success';                
+  }
+
+  // 🟢 Determina el color para el ícono y badge de Stock
+  getColorStock(stock: number | null, minStock: number | null | undefined): string {
+    if (stock === null) return 'medium';
+    if (stock <= 0) return 'danger'; // Rojo si está agotado
+    if (minStock !== null && minStock !== undefined && stock <= minStock) return 'warning'; // Amarillo si está bajo el mínimo
+    return 'success'; // Verde si está bien de stock
+  }
+
+  formatearPrecio(precio: number): string {
+    if (!precio) return '0';
+    return precio.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
 
   abrirConfiguracion() {
-    console.log("Abriendo configuración de alertas...");
+    console.log("Abriendo configuración...");
   }
 }

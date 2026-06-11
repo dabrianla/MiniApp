@@ -1,0 +1,131 @@
+.header-resumen {
+  padding: 20px 16px 10px;
+  h2 { margin: 0; font-size: 1.4rem; font-weight: 700; color: #edf2d1; }
+  p { margin: 5px 0 0; font-size: 0.95rem; color: #dad5d5; line-height: 1.4; }
+}
+
+.formulario-lote {
+  padding: 10px;
+  animation: fadeUp 0.3s ease-out;
+}
+
+.producto-card {
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+
+  .info-producto {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
+    .img-preview {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+
+    /* 🔴 CORRECCIÓN: Textos del producto forzados a oscuro para evitar conflictos con modo oscuro */
+    h3 { margin: 0 0 5px; font-weight: bold; color: #222428 !important; }
+    p { margin: 0; color: #555555 !important; font-size: 0.9rem; }
+  }
+}
+
+.input-moderno {
+  --background: white;
+  --border-radius: 12px;
+  --padding-start: 16px;
+  
+  /* 🔴 CORRECCIÓN: Forzamos el texto a gris oscuro y arreglamos el ion-input interno */
+  --color: #222428 !important; 
+  
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  margin-bottom: 15px;
+
+  /* 🔴 CORRECCIÓN: Aseguramos el texto al escribir y el placeholder */
+  ion-input {
+    --color: #222428 !important; 
+    --placeholder-color: #888888;
+  }
+}
+
+.botones-accion {
+  margin-top: 30px;
+  padding: 0 10px;
+
+  .btn-guardar {
+    --border-radius: 12px;
+    height: 50px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.search-scan-row {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 10px;
+
+  .custom-search {
+    padding: 0;
+    flex-grow: 1;
+    
+    /* 🔴 CORRECCIÓN: Colores oscuros obligatorios para el buscador */
+    --color: #222428 !important; 
+    --placeholder-color: #666666; 
+    --icon-color: var(--ion-color-primary); 
+    --clear-button-color: #222428;
+  }
+
+  .btn-escanear {
+    height: 40px;
+    width: 50px;
+    margin: 0;
+    --border-radius: 12px;
+  }
+}
+
+/* 📷 ESTILOS DEL ESCÁNER */
+.scanner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  /* Fondo semi-transparente para ver la cámara de fondo */
+  background: rgba(0, 0, 0, 0.4); 
+
+  .marco-escaner {
+    width: 250px;
+    height: 150px;
+    border: 3px solid var(--ion-color-secondary); // Borde amarillo
+    border-radius: 15px;
+    box-shadow: 0 0 0 100vmax rgba(0,0,0,0.5); // Oscurece el resto de la pantalla
+    margin-bottom: 20px;
+  }
+
+  .texto-escaner {
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 50px;
+    z-index: 10;
+  }
+
+  .btn-cancelar-scan {
+    --border-radius: 30px;
+    z-index: 10;
+  }
+}

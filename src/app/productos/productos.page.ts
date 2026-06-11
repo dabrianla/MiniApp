@@ -19,6 +19,7 @@ import { add, barcodeOutline, createOutline, trashOutline, saveOutline, closeOut
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { AuthService } from '../services/auth';
 import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capacitor/camera'; // <-- IMPORTANTE
+import { ActivatedRoute } from '@angular/router'; // 🟢 Agrega esto arriba
 
 @Component({
   selector: 'app-productos',
@@ -41,6 +42,7 @@ export class ProductosPage implements OnInit {
   public authService = inject(AuthService);
   private ngZone = inject(NgZone);
   private loadingController = inject(LoadingController);
+  private route = inject(ActivatedRoute);
   
   textoBusqueda: string = '';
   filtroMarca: string = 'Todas';
@@ -64,7 +66,7 @@ export class ProductosPage implements OnInit {
   constructor(
     public inventarioService: InventarioService, 
     private cdr: ChangeDetectorRef, 
-    private alertController: AlertController
+    private alertController: AlertController,
   ) {
     // 👇 AQUI REGISTRAMOS cubeOutline y pricetagOutline
     addIcons({ add, barcodeOutline, createOutline, trashOutline, saveOutline, closeOutline, cameraOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline });
@@ -73,6 +75,22 @@ export class ProductosPage implements OnInit {
   ngOnInit() {
     this.inventarioService.productos$.subscribe(() => {
       this.cargarFiltrosYProductos();
+    });
+
+    // 🟢 ESCUCHAMOS SI VENIMOS DESDE LAS NOTIFICACIONES
+    this.route.queryParams.subscribe(params => {
+      if (params['buscar']) {
+        // Limpiamos los filtros para asegurarnos de que el producto se muestre
+        this.filtroCategoria = 'Todas';
+        this.filtroMarca = 'Todas';
+        this.filtroDistribuidor = 'Todos';
+        
+        // Escribimos automáticamente en el buscador lo que nos mandó la notificación
+        this.textoBusqueda = params['buscar'];
+        
+        // Aplicamos el filtro visual
+        this.aplicarFiltros();
+      }
     });
   }
 

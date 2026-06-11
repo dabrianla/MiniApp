@@ -9,7 +9,8 @@ import {
   LoadingController, AlertController, IonCard, IonCardContent, IonList, IonToggle, IonFooter
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { barcodeOutline, cameraOutline, imageOutline, saveOutline, createOutline, trashOutline, closeOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, scaleOutline, alertCircleOutline, calendarClearOutline} from 'ionicons/icons';
+// 🟢 Corregí el nombre del ícono del calendario
+import { barcodeOutline, cameraOutline, imageOutline, saveOutline, createOutline, trashOutline, closeOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, scaleOutline, alertCircleOutline, calendarOutline} from 'ionicons/icons';
 import { InventarioService, Producto } from '../services/inventario';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capacitor/camera';
@@ -49,7 +50,7 @@ export class AgregarProductoPage {
   private ngZone = inject(NgZone);
 
   constructor() {
-    addIcons({ barcodeOutline, cameraOutline, imageOutline, saveOutline, createOutline, trashOutline, closeOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, scaleOutline, alertCircleOutline, calendarClearOutline });
+    addIcons({ barcodeOutline, cameraOutline, imageOutline, saveOutline, createOutline, trashOutline, closeOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, scaleOutline, alertCircleOutline, calendarOutline });
   }
 
   // --- 1. GUARDAR PRODUCTO ---
@@ -64,10 +65,8 @@ export class AgregarProductoPage {
       return;
     }
 
-    // Validación de duplicados
     if (this.nuevoProducto.codigoBarras && this.nuevoProducto.codigoBarras.trim() !== '') {
       const codigoA_Buscar = this.nuevoProducto.codigoBarras.trim();
-      
       const productoExistente = this.inventarioService.productos.find(
         (p) => p.codigoBarras === codigoA_Buscar
       );
@@ -75,8 +74,7 @@ export class AgregarProductoPage {
       if (productoExistente) {
         const alert = await this.alertController.create({
           header: '❌ Código Duplicado ❌',
-          message: `No se puede agregar. Ya existe un producto con este código de barras: ${productoExistente.nombre}. 
-          Por favor, búscalo en el inventario si deseas actualizar su precio o stock.`,
+          message: `Ya existe un producto con este código de barras: ${productoExistente.nombre}. Búscalo en el inventario si deseas actualizar su stock.`,
           buttons: ['Entendido']
         });
         await alert.present();
@@ -85,7 +83,7 @@ export class AgregarProductoPage {
     }
 
     const loading = await this.loadingController.create({
-      message: 'Subiendo producto y foto...', // 🟢 Cambiamos el mensaje para que el usuario sepa qué pasa
+      message: 'Subiendo producto...', 
       spinner: 'circles'
     });
     await loading.present();
@@ -93,19 +91,29 @@ export class AgregarProductoPage {
     try {
       let urlImagenFinal = '';
 
-      // 🟢 EL PASO CLAVE: Subimos la imagen a Storage antes de guardar el producto
       if (this.nuevoProducto.imagen) {
         urlImagenFinal = await this.inventarioService.subirImagen(
           this.nuevoProducto.imagen, 
-          this.nuevoProducto.nombre.replace(/\s+/g, '_') // Limpiamos el nombre para que el archivo no tenga espacios raros
+          this.nuevoProducto.nombre.replace(/\s+/g, '_') 
         );
       }
 
-      // Reemplazamos la imagen gigante en Base64 por la URL cortita de internet
+      // 🟢 TRATAMIENTO DE LA FECHA (PASA DE TEXTO A OBJETO DATE NATIVO)
+      let fechaFinalDate = null;
+      if (this.nuevoProducto.fechaVencimiento && this.nuevoProducto.fechaVencimiento.trim() !== '') {
+        // Separamos el texto "2025-10-31" en una lista [2025, 10, 31]
+        const partesFecha = this.nuevoProducto.fechaVencimiento.split('-');
+        if(partesFecha.length === 3) {
+          // Javascript cuenta los meses desde el 0 (Enero es 0). Por eso el -1 en el mes.
+          fechaFinalDate = new Date(parseInt(partesFecha[0]), parseInt(partesFecha[1]) - 1, parseInt(partesFecha[2]));
+        }
+      }
+
       const datosParaGuardar = {
         ...this.nuevoProducto,
         imagen: urlImagenFinal, 
-        codigoBarras: this.nuevoProducto.codigoBarras || '' 
+        codigoBarras: this.nuevoProducto.codigoBarras || '',
+        fechaVencimiento: fechaFinalDate // 🟢 Se guarda un Date real, Firebase lo convierte a Timestamp
       };
 
       await this.inventarioService.agregarProducto(datosParaGuardar);
@@ -169,8 +177,8 @@ export class AgregarProductoPage {
         width: 800,
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
-        source: CameraSource.Camera, // 🟢 Forzamos que abra la cámara directo (sin preguntar galería)
-        direction: CameraDirection.Rear // 🟢 Forzamos cámara TRASERA
+        source: CameraSource.Camera, 
+        direction: CameraDirection.Rear 
       });
 
       this.ngZone.run(() => {
