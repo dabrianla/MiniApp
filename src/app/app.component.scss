@@ -117,3 +117,19 @@ ion-note {
 ion-item.selected {
   --color: var(--ion-color-primary);
 }
+
+/* Estilo del Globito Rojo de Novedades */
+.badge-novedad {
+  border-radius: 12px;
+  font-size: 10px;
+  padding: 4px 6px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  animation: pulse-badge 2s infinite; /* Efecto sutil de latido para llamar la atención */
+}
+
+@keyframes pulse-badge {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}

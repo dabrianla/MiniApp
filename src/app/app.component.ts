@@ -1,15 +1,17 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { IonApp, IonSplitPane, IonMenu, IonContent, IonList, IonListHeader, IonNote, IonMenuToggle, IonItem, IonIcon, IonLabel, IonRouterOutlet, IonRouterLink, Platform } from '@ionic/angular/standalone';
+import { IonApp, IonSplitPane, IonMenu, IonContent, IonList, IonListHeader, IonNote, IonMenuToggle, IonItem, IonIcon, IonLabel, IonRouterOutlet, IonRouterLink, Platform, IonBadge } from '@ionic/angular/standalone'; // 🟢 Agregamos IonBadge
 import { addIcons } from 'ionicons';
 import { 
   mailOutline, mailSharp, cubeOutline, cubeSharp, paperPlaneOutline, paperPlaneSharp, 
   heartOutline, heartSharp, archiveOutline, archiveSharp, trashOutline, trashSharp, 
   warningOutline, warningSharp, bookmarkOutline, bookmarkSharp, lockClosedOutline, 
-  lockClosedSharp, logOutOutline, logOutSharp, addCircleOutline, cartOutline, listOutline, cartSharp
+  lockClosedSharp, logOutOutline, logOutSharp, addCircleOutline, cartOutline, listOutline, cartSharp,walletOutline, walletSharp
 } from 'ionicons/icons';
+
 import { AuthService } from './services/auth';
+import { InventarioService } from './services/inventario'; // 🟢 Importamos el servicio
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { Camera } from '@capacitor/camera';
 
@@ -21,50 +23,42 @@ import { Camera } from '@capacitor/camera';
   imports: [
     RouterLink, RouterLinkActive, IonApp, IonSplitPane, IonMenu, IonContent, 
     IonList, IonListHeader, IonNote, IonMenuToggle, IonItem, IonIcon, IonLabel, 
-    IonRouterLink, IonRouterOutlet, CommonModule
+    IonRouterLink, IonRouterOutlet, CommonModule, IonBadge // 🟢 Agregamos IonBadge
   ],
 })
 export class AppComponent {
   
-  // Inyectamos el servicio de usuarios
   public authService = inject(AuthService);
+  public inventarioService = inject(InventarioService); // 🟢 Inyectamos el servicio
   public platform = inject(Platform);
   
-  // 🟢 AQUÍ AGREGAMOS LA NUEVA PÁGINA "Ingreso de Stock"
   public appPages = [
     { title: 'Catalogo de productos', url: '/productos', icon: 'cube' },
     { title: 'Punto de venta', url: '/punto-venta', icon: 'cart' },
     { title: 'Ingreso de Stock', url: '/ingreso-stock', icon: 'archive' }, 
-    { title: 'Alertas y Novedades', url: '/notificaciones', icon: 'warning' },
+    { title: 'Alertas y Novedades', url: '/notificaciones', icon: 'warning', id: 'alertas' }, // 🟢 Le agregamos un ID interno
+    { title: 'Historial de ventas', url: '/historial-ventas', icon: 'wallet' },
   ];
   
   constructor() {
-    // Registro de los íconos de Ionic
     addIcons({ 
       mailOutline, mailSharp, cubeOutline, cubeSharp, paperPlaneOutline, paperPlaneSharp, 
       heartOutline, heartSharp, archiveOutline, archiveSharp, trashOutline, trashSharp, 
       warningOutline, warningSharp, bookmarkOutline, bookmarkSharp, lockClosedOutline, 
-      lockClosedSharp, logOutOutline, logOutSharp, addCircleOutline, cartOutline, listOutline, cartSharp
+      lockClosedSharp, logOutOutline, logOutSharp, addCircleOutline, cartOutline, listOutline, cartSharp, walletOutline, walletSharp
     });
 
-    // 🟢 ESTO FALTABA: Ejecutamos la función para que pida la cámara al abrir la app
     this.iniciarApp();
   }
 
   async iniciarApp() {
-    // Esperamos a que el sistema operativo del celular esté listo
     await this.platform.ready();
-
-    // Solicitamos los permisos
     this.solicitarPermisosCamara();
   }
 
   async solicitarPermisosCamara() {
     try {
-      // 1. Pide permiso para el escáner de códigos de barras
       const statusEscaner = await BarcodeScanner.checkPermission({ force: true });
-      
-      // 2. Pide permiso para la cámara de fotos
       await Camera.requestPermissions();
 
       if (statusEscaner.granted) {

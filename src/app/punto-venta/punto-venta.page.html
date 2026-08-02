@@ -1,98 +1,169 @@
-<ion-header [translucent]="true" *ngIf="!escaneando">
-  <ion-toolbar color="dark">
+<ion-header class="ion-no-border" *ngIf="!escaneando">
+  
+  <ion-toolbar color="dark" *ngIf="!cajaAbierta">
     <ion-buttons slot="start">
+      <ion-button (click)="volverAlMenu()" color="secondary">
+        <ion-icon name="home-outline" slot="start"></ion-icon>
+        Volver al Inicio
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <ion-toolbar color="dark" *ngIf="cajaAbierta">
+    <ion-buttons slot="start">
+      <ion-button (click)="volverAlMenu()" color="secondary">
+        <ion-icon name="home-outline" slot="icon-only"></ion-icon>
+      </ion-button>
       <ion-menu-button color="secondary"></ion-menu-button>
     </ion-buttons>
-    <ion-title color="secondary">Caja / Ventas</ion-title>
+    
+    <ion-title color="secondary">Caja: {{ nombreCajero | uppercase }}</ion-title>
+    
+    <ion-buttons slot="end">
+      <ion-button color="danger" (click)="confirmarCierreCaja()" style="font-weight: bold; background: rgba(255, 73, 97, 0.1); border-radius: 8px; margin-right: 10px;">
+        <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+        CERRAR CAJA
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
+
 </ion-header>
 
 <ion-content [style.--background]="escaneando ? 'transparent' : 'var(--ion-color-dark)'" [fullscreen]="true" class="ion-padding">
   
-  <div *ngIf="!escaneando">
-    <ion-button expand="block" color="secondary" class="ion-margin-bottom" style="height: 60px;" (click)="escanearParaVender()">
-      <ion-icon name="barcode-outline" slot="start"></ion-icon>
-      <b>ESCANEAR PRODUCTO</b>
-    </ion-button>
+  <div *ngIf="!cajaAbierta" class="ion-text-center">
+    <div style="margin-top: 25%; max-width: 400px; margin-left: auto; margin-right: auto;">
+      
+      <ion-icon name="storefront-outline" style="font-size: 5.5rem; color: var(--ion-color-secondary); margin-bottom: 10px;"></ion-icon>
+      <h1 style="color: white; font-weight: 900; font-size: 2rem; margin-bottom: 5px;">Abrir Caja</h1>
+      <p style="color: var(--ion-color-medium); margin-bottom: 35px;">Ingresa tus datos para iniciar el turno.</p>
 
-    <ion-searchbar 
-      mode="ios"
-      [(ngModel)]="terminoBusqueda" 
-      (ionInput)="buscarProducto($event)" 
-      placeholder="O busca por nombre..." 
-      color="dark" 
-      class="ion-no-padding ion-margin-bottom">
-    </ion-searchbar>
-
-   <ion-list *ngIf="productosFiltrados.length > 0" lines="full" style="background: var(--ion-color-dark); border-radius: 10px; margin-bottom: 20px;">
-      <ion-item *ngFor="let prod of productosFiltrados" button 
-          color="dark"
-          class="item-presionable"
-          (mousedown)="iniciarPresion(prod, $event)" 
-          (touchstart)="iniciarPresion(prod, $event)" 
-          (mousemove)="cancelarSiSeMueve($event)" 
-          (touchmove)="cancelarSiSeMueve($event)" 
-          (contextmenu)="prevenirMenu($event)"
-          (click)="agregarDesdeBuscador(prod, $event)">
-        
-        <ion-thumbnail slot="start">
-          <img [src]="prod.imagen || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'" style="border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1);" />
-        </ion-thumbnail>
-
-        <ion-label>
-          <h2 style="color: white; font-weight: bold;">{{ prod.nombre }}</h2>
-          <p style="color: var(--ion-color-secondary);">{{ prod.marca || 'Sin marca' }} | ${{ prod.precio }}</p>
-        </ion-label>
-        
-        <ion-icon name="add-circle-outline" slot="end" color="secondary" style="font-size: 1.8rem;"></ion-icon>
+      <ion-item color="dark" style="border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; margin-bottom: 15px; --padding-start: 15px;" lines="none">
+        <ion-icon name="person-outline" slot="start" color="secondary"></ion-icon>
+        <ion-input [(ngModel)]="nombreCajero" 
+                   placeholder="Tu Nombre (Ej. Emilio)" 
+                   style="color: white; font-size: 1.1rem; font-weight: bold;">
+        </ion-input>
       </ion-item>
-    </ion-list>
 
-    <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;" *ngIf="carrito.length > 0"></div>
+      <ion-item color="dark" style="border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; margin-bottom: 25px; --padding-start: 15px;" lines="none">
+        <ion-icon name="wallet-outline" slot="start" color="secondary"></ion-icon>
+        <ion-input [(ngModel)]="fondoDeCaja" 
+                   type="number" 
+                   placeholder="Efectivo inicial (Ej. 50000)" 
+                   style="color: white; font-size: 1.1rem; font-weight: bold;">
+        </ion-input>
+      </ion-item>
 
-    <div *ngIf="carrito.length === 0 && productosFiltrados.length === 0" class="ion-text-center ion-padding" style="margin-top: 30px; opacity: 0.5;">
-      <ion-icon name="cart-outline" style="font-size: 5rem; color: white;"></ion-icon>
-      <h3 style="color: white;">El carrito está vacío</h3>
-      <p style="color: white;">Escanea o busca productos para agregarlos.</p>
+      <ion-button expand="block" 
+                  color="secondary" 
+                  shape="round" 
+                  style="height: 55px; font-weight: 900; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(var(--ion-color-secondary-rgb), 0.4);" 
+                  (click)="abrirCaja()" 
+                  [disabled]="nombreCajero.trim() === '' || fondoDeCaja === null">
+        ABRIR TURNO Y VENDER
+      </ion-button>
+
     </div>
-
-    <ion-list *ngIf="carrito.length > 0" lines="full" style="background: transparent;">
-      <ion-item *ngFor="let item of carrito; let i = index" color="dark">
-        
-        <ion-thumbnail slot="start">
-          <img [src]="item.producto.imagen || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'" style="border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1);" />
-        </ion-thumbnail>
-
-        <ion-label>
-          <h2 style="font-weight: bold; font-size: 1.1rem; color: white;">{{ item.producto.nombre }}</h2>
-          <p style="color: var(--ion-color-secondary); font-weight: bold;">
-            {{ item.producto.marca || 'Sin marca' }} | ${{ item.producto.precio }} c/u
-          </p>
-        </ion-label>
-        
-        <div slot="end" style="display: flex; align-items: center; gap: 10px;">
-          <ion-icon name="remove-circle-outline" style="font-size: 1.8rem; color: #ff4961;" (click)="cambiarCantidad(i, -1)"></ion-icon>
-          <span style="font-size: 1.2rem; font-weight: bold; width: 20px; text-align: center; color: white;">
-            {{ item.cantidad }}
-          </span>
-          <ion-icon name="add-circle-outline" style="font-size: 1.8rem; color: var(--ion-color-secondary);" (click)="cambiarCantidad(i, 1)"></ion-icon>
-        </div>
-      </ion-item>
-    </ion-list>
   </div>
 
-  <div *ngIf="escaneando" class="scanner-overlay">
-    <h2 class="scanner-text" style="color: white; text-align: center; margin-top: 100px;">Apunta al código para vender</h2>
-    <div class="scanner-box" style="border: 2px solid var(--ion-color-secondary); width: 250px; height: 250px; margin: 50px auto; position: relative;">
-      <div class="laser" style="width: 100%; height: 2px; background: red; position: absolute; top: 50%;"></div>
-    </div>
-    <ion-button expand="block" (click)="detenerEscaneo()" color="danger" style="margin: 20px;">
-      Cancelar Escaneo
-    </ion-button>
-  </div>
 
-  <div class="instagram-overlay" [class.activo]="previewActivo" (click)="terminarPresion()">
-       
+  <div *ngIf="cajaAbierta">
+    
+    <div *ngIf="!escaneando">
+      <ion-button expand="block" color="secondary" class="ion-margin-bottom" style="height: 60px;" (click)="escanearParaVender()">
+        <ion-icon name="barcode-outline" slot="start"></ion-icon>
+        <b>ESCANEAR PRODUCTO</b>
+      </ion-button>
+
+      <ion-searchbar 
+        mode="ios"
+        [(ngModel)]="textoBusqueda"
+        (ionInput)="buscarProducto($event)" 
+        placeholder="O busca por nombre..." 
+        color="dark" 
+        class="ion-no-padding ion-margin-bottom">
+      </ion-searchbar>
+
+     <ion-list *ngIf="productosFiltrados.length > 0" lines="full" style="background: var(--ion-color-dark); border-radius: 10px; margin-bottom: 20px;">
+        <ion-item *ngFor="let prod of productosFiltrados" button 
+            color="dark"
+            class="item-presionable"
+            (mousedown)="iniciarPresion(prod, $event)" 
+            (touchstart)="iniciarPresion(prod, $event)" 
+            (mousemove)="cancelarSiSeMueve($event)" 
+            (touchmove)="cancelarSiSeMueve($event)" 
+            (contextmenu)="prevenirMenu($event)"
+            (click)="agregarDesdeBuscador(prod, $event)">
+          
+          <ion-thumbnail slot="start">
+            <img [src]="prod.imagen || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'" style="border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1);" />
+          </ion-thumbnail>
+
+          <ion-label>
+            <h2 style="color: white; font-weight: bold;">{{ prod.nombre }}</h2>
+            <p style="color: var(--ion-color-secondary);">{{ prod.marca || 'Sin marca' }} | ${{ prod.precio }}</p>
+          </ion-label>
+          
+          <ion-icon name="add-circle-outline" slot="end" color="secondary" style="font-size: 1.8rem;"></ion-icon>
+          <ion-button 
+            *ngIf="prod.categoria?.toLowerCase() === 'verdulería' || prod.categoria?.toLowerCase() === 'panadería'"
+            fill="clear" 
+            slot="end" 
+            color="primary" 
+            (click)="abrirCalculadora(prod); $event.stopPropagation()">
+            <ion-icon name="scale-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-item>
+      </ion-list>
+
+      <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;" *ngIf="carrito.length > 0"></div>
+
+      <div *ngIf="carrito.length === 0 && productosFiltrados.length === 0" class="ion-text-center ion-padding" style="margin-top: 30px; opacity: 0.5;">
+        <ion-icon name="cart-outline" style="font-size: 5rem; color: white;"></ion-icon>
+        <h3 style="color: white;">El carrito está vacío</h3>
+        <p style="color: white;">Escanea o busca productos para agregarlos.</p>
+      </div>
+
+      <ion-list *ngIf="carrito.length > 0" lines="full" style="background: transparent;">
+        <ion-item *ngFor="let item of carrito; let i = index" color="dark">
+          
+          <ion-thumbnail slot="start">
+            <img [src]="item.producto.imagen || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'" style="border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1);" />
+          </ion-thumbnail>
+
+          <ion-label>
+            <h2 style="font-weight: bold; font-size: 1.1rem; color: white;">{{ item.producto.nombre }}</h2>
+            <p style="color: var(--ion-color-secondary); font-weight: bold;">
+              {{ item.producto.marca || 'Sin marca' }} | ${{ item.producto.precio }} c/u
+            </p>
+          </ion-label>
+          
+          <div slot="end" style="display: flex; align-items: center; gap: 10px;">
+            <ion-icon name="remove-circle-outline" style="font-size: 1.8rem; color: #ff4961;" (click)="cambiarCantidad(i, -1)"></ion-icon>
+            <span style="font-size: 1.2rem; font-weight: bold; width: 20px; text-align: center; color: white;">
+              {{ item.cantidad }}
+            </span>
+            <ion-icon name="add-circle-outline" style="font-size: 1.8rem; color: var(--ion-color-secondary);" (click)="cambiarCantidad(i, 1)"></ion-icon>
+          </div>
+        </ion-item>
+      </ion-list>
+    </div>
+
+    <div *ngIf="escaneando" class="scanner-overlay">
+      <p class="scanner-text">Apunta al código para vender</p>
+      
+      <div class="scanner-box">
+        <div class="laser"></div>
+      </div>
+      
+      <ion-button color="danger" class="btn-cancelar" (click)="detenerEscaneo()">
+        <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+        Cancelar
+      </ion-button>
+    </div>
+
+  </div> <div class="instagram-overlay" [class.activo]="previewActivo" (click)="terminarPresion()">
     <div class="instagram-popup" *ngIf="productoPreview">
       <img [src]="productoPreview.imagen || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'" />
       <div class="info-popup">
@@ -105,16 +176,147 @@
 
 </ion-content>
 
-<ion-footer *ngIf="!escaneando && carrito.length > 0" class="ion-no-border">
+<ion-footer *ngIf="!escaneando && cajaAbierta && carrito.length > 0" class="ion-no-border">
   <ion-toolbar color="dark" class="ion-padding">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
       <span style="font-size: 1.2rem; color: white;">Total a Pagar:</span>
       <span style="font-size: 1.8rem; font-weight: 900; color: var(--ion-color-secondary);">${{ total }}</span>
     </div>
     
-    <ion-button expand="block" color="primary" shape="round" style="height: 55px; font-weight: 800; font-size: 1.1rem;" (click)="confirmarVenta()">
+    <ion-button expand="block" color="primary" shape="round" style="height: 55px; font-weight: 800; font-size: 1.1rem;" (click)="abrirModalCobro()">
       <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-      CONFIRMAR Y COBRAR
+      COBRAR
     </ion-button>
   </ion-toolbar>
 </ion-footer>
+
+
+<ion-modal [isOpen]="mostrarCalculadora" (didDismiss)="cerrarCalculadora()" [initialBreakpoint]="0.65" [breakpoints]="[0, 0.65, 0.9]" class="modal-calculadora">
+  <ng-template>
+    <ion-header class="ion-no-border">
+      <ion-toolbar color="light">
+        <ion-title style="font-size: 1.1rem;">
+          {{ productoPesable?.nombre }}
+        </ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarCalculadora()">
+            <ion-icon name="close-circle-outline" slot="icon-only" color="medium"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+      <ion-toolbar color="light" class="segment-toolbar">
+        <ion-segment [(ngModel)]="modoCalculadora" mode="ios">
+          <ion-segment-button value="peso"><ion-label>Por Peso (Kg/Gr)</ion-label></ion-segment-button>
+          <ion-segment-button value="monto"><ion-label>Por Monto ($)</ion-label></ion-segment-button>
+        </ion-segment>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="calc-content ion-padding">
+      <div class="pantalla-calculadora">
+        <div class="monto-input">
+          <span class="simbolo">{{ modoCalculadora === 'monto' ? '$' : '' }}</span>
+          <span class="valor">{{ inputCalculo || '0' }}</span>
+          <span class="unidad">{{ modoCalculadora === 'peso' ? ' Kg' : '' }}</span>
+        </div>
+        <div class="conversion" *ngIf="modoCalculadora === 'peso'">
+          Equivale a: <strong style="font-size: 1.2rem;">${{ (calcularMontoDesdePeso() | number:'1.0-0') }}</strong>
+        </div>
+        <div class="conversion" *ngIf="modoCalculadora === 'monto'">
+          Equivale a: <strong style="font-size: 1.2rem;">{{ calcularPesoDesdeMonto() | number:'1.3-3' }} Kg</strong>
+        </div>
+      </div>
+      <div class="teclado-pos">
+        <ion-button class="tecla" fill="solid" color="light" (click)="teclear('1')">1</ion-button>
+        <ion-button class="tecla" fill="solid" color="light" (click)="teclear('2')">2</ion-button>
+        <ion-button class="tecla" fill="solid" color="light" (click)="teclear('3')">3</ion-button>
+        <ion-button class="tecla" fill="solid" color="light" (click)="teclear('4')">4</ion-button>
+        <ion-button class="tecla" fill="solid" color="light" (click)="teclear('5')">5</ion-button>
+        <ion-button class="tecla" fill="solid" color="light" (click)="teclear('6')">6</ion-button>
+        <ion-button class="tecla" fill="solid" color="light" (click)="teclear('7')">7</ion-button>
+        <ion-button class="tecla" fill="solid" color="light" (click)="teclear('8')">8</ion-button>
+        <ion-button class="tecla" fill="solid" color="light" (click)="teclear('9')">9</ion-button>
+        <ion-button class="tecla" fill="solid" color="light" (click)="teclear('.')">.</ion-button>
+        <ion-button class="tecla" fill="solid" color="light" (click)="teclear('0')">0</ion-button>
+        <ion-button class="tecla borrar" color="danger" fill="solid" (click)="borrarCaracter()">
+          <ion-icon name="backspace-outline"></ion-icon>
+        </ion-button>
+      </div>
+      <ion-button expand="block" size="large" color="success" class="btn-agregar-calc" (click)="confirmarCalculo()">
+        <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+        Agregar al Ticket
+      </ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+
+<ion-modal [isOpen]="modalCobroAbierto" (didDismiss)="cerrarModalCobro()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Cobrar Total: ${{ total }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarModalCobro()">
+            <ion-icon name="close-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding">
+      <ion-segment [(ngModel)]="metodoPago" mode="ios" style="margin-bottom: 20px;">
+        <ion-segment-button value="efectivo">
+          <ion-label><ion-icon name="cash-outline"></ion-icon> Efectivo</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="tarjeta">
+          <ion-label><ion-icon name="card-outline"></ion-icon> Tarjeta</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="transferencia">
+          <ion-label><ion-icon name="phone-portrait-outline"></ion-icon> Transfer</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+
+      <div *ngIf="metodoPago === 'efectivo'">
+        <ion-item>
+          <ion-label position="stacked">Monto Recibido</ion-label>
+          <ion-input type="number" [(ngModel)]="montoRecibido" placeholder="Ej: 20000"></ion-input>
+        </ion-item>
+        <ion-item *ngIf="montoRecibido && montoRecibido >= total" lines="none">
+          <ion-label color="success">
+            <h2>Vuelto a entregar: ${{ montoRecibido - total }}</h2>
+          </ion-label>
+        </ion-item>
+      </div>
+
+      <div *ngIf="metodoPago === 'transferencia'" class="ion-text-center">
+        <p style="font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; color: var(--ion-color-dark);">
+          Evidencia del pago
+        </p>
+        
+        <div (click)="tomarFotoComprobante()" style="height: 250px; background: #e0e0e0; border-radius: 15px; border: 2px dashed #888; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+          
+          <img *ngIf="fotoTransferencia" [src]="fotoTransferencia" style="width: 100%; height: 100%; object-fit: cover;" />
+          
+          <div *ngIf="!fotoTransferencia" style="color: #666;">
+            <ion-icon name="camera-outline" style="font-size: 3rem;"></ion-icon>
+            <p style="margin-top: 5px; font-weight: 500;">Tocar para foto</p>
+          </div>
+        </div>
+
+        <ion-button *ngIf="fotoTransferencia" fill="clear" color="danger" (click)="fotoTransferencia = ''">
+          <ion-icon name="trash-outline" slot="start"></ion-icon>
+          Borrar foto
+        </ion-button>
+      </div>
+    </ion-content>
+
+    <ion-footer>
+      <ion-toolbar>
+        <ion-button expand="block" color="success" class="ion-margin" (click)="ejecutarVenta()">
+          Finalizar Venta
+        </ion-button>
+      </ion-toolbar>
+    </ion-footer>
+  </ng-template>
+</ion-modal>

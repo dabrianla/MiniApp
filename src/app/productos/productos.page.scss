@@ -258,3 +258,57 @@ ion-modal ion-content {
   /* Le damos un poco más de sombra para que "flote" por encima de las ofertas amarillas */
   box-shadow: 0 6px 16px rgb(1, 0, 50);
 }
+
+/* =========================================
+   FILTRO DE MARCAS PREMIUM (EFECTO CRISTAL)
+   ========================================= */
+
+.cabecera-letra {
+  /* Fondo oscuro semitransparente que hace el efecto cristal al hacer scroll */
+  --background: rgba(30, 30, 30, 0.85); 
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--ion-color-secondary); 
+  padding-left: 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.item-marca {
+  --padding-start: 15px;
+  font-size: 15px;
+  color: #eee;
+  --background: transparent;
+}
+
+.indice-lateral {
+  position: fixed;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 100;
+  padding: 10px 2px;
+  /* Fondo del scroller lateral sutil */
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 20px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.letra-indice {
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:active {
+    color: var(--ion-color-secondary);
+    transform: scale(1.5);
+  }
+}

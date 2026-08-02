@@ -40,6 +40,7 @@
   transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Rebote elegante */
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.15);
+  pointer-events: none; /* 🟢 Esto evita que el popup se robe los eventos táctiles */
 
   img {
     width: 100%;
@@ -71,9 +72,77 @@
     font-weight: 900;
     margin: 0;
   }
-
-  .instagram-popup {
-  // ... (tus estilos actuales)
-  pointer-events: none; // 🟢 Esto evita que el popup se robe los eventos táctiles
 }
+
+/* --- CALCULADORA POS --- */
+.modal-calculadora {
+  --border-radius: 25px 25px 0 0;
+  --box-shadow: 0 -10px 20px rgba(0,0,0,0.15);
+}
+
+.segment-toolbar {
+  padding-bottom: 10px;
+}
+
+.calc-content {
+  --background: #f4f5f8; /* Un gris muy sutil para destacar el panel */
+}
+
+.pantalla-calculadora {
+  background: white;
+  border-radius: 18px;
+  padding: 20px;
+  text-align: right;
+  margin-bottom: 20px;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+  border: 1px solid #e0e0e0;
+
+  .monto-input {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #222;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    font-family: 'Courier New', Courier, monospace; /* Toque clásico de caja registradora */
+  }
+
+  .conversion {
+    font-size: 1rem;
+    color: #888;
+    strong {
+      color: var(--ion-color-primary);
+    }
+  }
+}
+
+.teclado-pos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 25px;
+
+  .tecla {
+    margin: 0;
+    --border-radius: 12px;
+    --box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+    font-size: 1.6rem;
+    font-weight: 700;
+    height: 65px;
+    
+    &::part(native) {
+      color: #333;
+    }
+    
+    &.borrar {
+      --box-shadow: 0 4px 6px rgba(255,0,0,0.15);
+    }
+  }
+}
+
+.btn-agregar-calc {
+  --border-radius: 14px;
+  font-weight: bold;
+  height: 60px;
+  font-size: 1.1rem;
+  --box-shadow: 0 6px 12px rgba(45, 211, 111, 0.3);
 }

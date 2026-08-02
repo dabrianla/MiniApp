@@ -35,4 +35,8 @@ export const routes: Routes = [
     path: 'ingreso-stock',
     loadComponent: () => import('./ingreso-stock/ingreso-stock.page').then( m => m.IngresoStockPage)
   },
+  {
+    path: 'historial-ventas',
+    loadComponent: () => import('./historial-ventas/historial-ventas.page').then( m => m.HistorialVentasPage)
+  },
 ];

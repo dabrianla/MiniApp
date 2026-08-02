@@ -1,0 +1,98 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/" color="secondary"></ion-back-button>
+    </ion-buttons>
+    <ion-title color="secondary">Cierre de Caja</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content color="dark" class="ion-padding">
+  
+  <ion-item color="dark" lines="none" style="border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; margin-bottom: 20px;">
+    <ion-icon name="calendar-outline" slot="start" color="secondary"></ion-icon>
+    <ion-label style="color: white; font-weight: bold;">Ver turnos del día:</ion-label>
+    <ion-datetime-button datetime="calendarioVentas" color="light"></ion-datetime-button>
+  </ion-item>
+
+  <ion-modal [keepContentsMounted]="true">
+    <ng-template>
+      <ion-datetime id="calendarioVentas" presentation="date" [value]="fechaSeleccionada" (ionChange)="cambiarFecha($event)"></ion-datetime>
+    </ng-template>
+  </ion-modal>
+
+  <ion-card style="background: rgba(45, 211, 111, 0.1); border: 2px solid #2dd36f; border-radius: 15px; margin: 0 0 25px 0;">
+    <ion-card-header class="ion-text-center">
+      <ion-card-title style="color: #2dd36f; font-weight: bold; font-size: 1.4rem;">
+        Resumen de Caja
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+        <span style="color: white; font-size: 1.1rem;"><ion-icon name="cash-outline"></ion-icon> Total Efectivo:</span>
+        <strong style="color: white; font-size: 1.1rem;">${{ totalEfectivo }}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+        <span style="color: white; font-size: 1.1rem;"><ion-icon name="card-outline"></ion-icon> Total Tarjeta:</span>
+        <strong style="color: white; font-size: 1.1rem;">${{ totalTarjeta }}</strong>
+      </div>
+      <div style="border-bottom: 1px solid rgba(255,255,255,0.3); margin: 15px 0;"></div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: var(--ion-color-secondary); font-size: 1.2rem; font-weight: bold;">TOTAL INGRESOS:</span>
+        <strong style="color: var(--ion-color-secondary); font-size: 1.8rem; font-weight: 900;">${{ totalCaja }}</strong>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <h2 style="color: white; font-weight: bold; margin-bottom: 15px; border-left: 4px solid var(--ion-color-secondary); padding-left: 10px;">
+    Detalle de Turnos ({{ turnosDelDia.length }})
+  </h2>
+
+  <div *ngIf="turnosDelDia.length === 0" class="ion-text-center" style="margin-top: 40px; opacity: 0.5;">
+    <ion-icon name="receipt-outline" style="font-size: 5rem; color: white;"></ion-icon>
+    <p style="color: white; font-size: 1.2rem;">No hay turnos registrados en esta fecha.</p>
+  </div>
+
+  <ion-accordion-group *ngIf="turnosDelDia.length > 0">
+    <ion-accordion *ngFor="let turno of turnosDelDia" style="background: var(--ion-color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 10px;">
+      
+      <ion-item slot="header" color="dark">
+        <ion-icon name="person-circle-outline" slot="start" color="secondary" style="font-size: 2rem;"></ion-icon>
+        <ion-label>
+          <h2 style="color: white; font-weight: bold; font-size: 1.2rem;">{{ turno.cajero | titlecase }}</h2>
+          <p style="color: var(--ion-color-secondary); font-weight: bold;">
+            En Estuche: ${{ turno.fondoCaja + turno.totalEfectivo }}
+          </p>
+        </ion-label>
+        <ion-badge color="medium" slot="end" style="padding: 5px 10px;">
+          {{ turno.ventas.length }} Tickets
+        </ion-badge>
+      </ion-item>
+
+      <div class="ion-padding" slot="content" style="background: rgba(0,0,0,0.2);">
+        
+        <div style="margin-bottom: 15px;">
+          <ion-note color="medium" style="display: block;"><ion-icon name="time-outline"></ion-icon> Apertura: {{ turno.fechaInicio | date:'shortTime' }}</ion-note>
+          <ion-note color="medium" style="display: block;" *ngIf="turno.fechaFin"><ion-icon name="time-outline"></ion-icon> Cierre: {{ turno.fechaFin | date:'shortTime' }}</ion-note>
+        </div>
+
+        <div style="background: rgba(45, 211, 111, 0.1); border: 1px solid #2dd36f; border-radius: 8px; padding: 10px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+            <span style="color: white;">Fondo Inicial:</span>
+            <span style="color: white;">${{ turno.fondoCaja }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+            <span style="color: white;">Ventas Efectivo:</span>
+            <span style="color: white;">${{ turno.totalEfectivo }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+            <span style="color: #3880ff;">Ventas Tarjeta:</span>
+            <span style="color: #3880ff;">${{ turno.totalTarjeta }}</span>
+          </div>
+        </div>
+
+      </div>
+    </ion-accordion>
+  </ion-accordion-group>
+
+</ion-content>

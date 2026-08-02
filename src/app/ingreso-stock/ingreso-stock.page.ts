@@ -9,7 +9,8 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { checkmarkCircleOutline, cubeOutline, barcodeOutline, closeCircleOutline } from 'ionicons/icons';
-import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
+// 🟢 1. Agregamos SupportedFormat aquí
+import { BarcodeScanner, SupportedFormat } from '@capacitor-community/barcode-scanner';
 
 import { InventarioService, Producto } from '../services/inventario';
 
@@ -48,7 +49,7 @@ export class IngresoStockPage implements OnInit, OnDestroy {
   ngOnInit() {}
 
   ngOnDestroy() {
-    this.detenerEscaner(); // Por si el usuario cambia de página mientras escanea
+    this.detenerEscaner(); 
   }
 
   // --- BUSCADOR MANUAL ---
@@ -66,8 +67,8 @@ export class IngresoStockPage implements OnInit, OnDestroy {
     );
   }
 
-  // --- ESCÁNER DE CÓDIGO DE BARRAS ---
-  async escanearCodigo() {
+  // --- ESCÁNER DE CÓDIGO DE BARRAS BLINDADO ---
+async escanearCodigo() {
     try {
       const status = await BarcodeScanner.checkPermission({ force: true });
       if (!status.granted) {
@@ -76,15 +77,32 @@ export class IngresoStockPage implements OnInit, OnDestroy {
       }
 
       await BarcodeScanner.hideBackground();
-      document.body.classList.add('scanner-active');
+      // 🟢 Usamos 'qrscanner' en lugar de 'scanner-active' para que coincida con tus estilos globales de las otras páginas
+      document.body.classList.add('qrscanner'); 
       this.scannerActivo = true;
 
-      const result = await BarcodeScanner.startScan();
-      this.detenerEscaner();
+      const opciones = {
+        targetedFormats: [
+          SupportedFormat.EAN_13, 
+          SupportedFormat.EAN_8, 
+          SupportedFormat.UPC_A, 
+          SupportedFormat.UPC_E
+        ]
+      };
+
+      const result = await BarcodeScanner.startScan(opciones);
+      this.detenerEscaner(); // Aseguramos de que se detenga al detectar algo
 
       if (result.hasContent) {
+        const codigoLeido = result.content.trim();
+
+        if (codigoLeido.length < 8) {
+           this.mostrarToast('⚠️ Reflejo detectado. Intenta acercar la cámara de nuevo.', 'warning');
+           return;
+        }
+
         this.ngZone.run(() => {
-          this.buscarPorCodigo(result.content);
+          this.buscarPorCodigo(codigoLeido);
         });
       }
     } catch (e) {
@@ -95,7 +113,7 @@ export class IngresoStockPage implements OnInit, OnDestroy {
   detenerEscaner() {
     BarcodeScanner.showBackground();
     BarcodeScanner.stopScan();
-    document.body.classList.remove('scanner-active');
+    document.body.classList.remove('qrscanner'); // 🟢 Removemos la misma clase
     this.scannerActivo = false;
   }
 
@@ -124,7 +142,6 @@ export class IngresoStockPage implements OnInit, OnDestroy {
   }
 
   async guardarIngreso() {
-    // 🟢 AQUÍ QUITAMOS LA RESTRICCIÓN DE LA FECHA
     if (!this.productoSeleccionado || !this.cantidadIngreso) {
       this.mostrarToast('Por favor, ingresa al menos la cantidad.', 'warning');
       return;

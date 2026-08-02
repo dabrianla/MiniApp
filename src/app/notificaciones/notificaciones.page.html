@@ -1,11 +1,11 @@
-<ion-header class="ion-no-border">
+<ion-header class="ion-no-border" *ngIf="!escaneando">
   <ion-toolbar color="secondary">
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
     <ion-title>Alertas</ion-title>
     
-    <ion-buttons slot="end" *ngIf="esAdmin && vistaActual === 'admin'">
+    <ion-buttons slot="end" *ngIf="esAdmin">
       <ion-button (click)="abrirConfiguracion()">
         <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
       </ion-button>
@@ -13,89 +13,159 @@
   </ion-toolbar>
 
   <ion-toolbar *ngIf="esAdmin" color="secondary">
-    <ion-segment [(ngModel)]="vistaActual" mode="ios">
+    <ion-segment [(ngModel)]="vistaActual" mode="ios" (ionChange)="cambiarVista($event)">
       <ion-segment-button value="admin">
         <ion-label>Panel Admin</ion-label>
       </ion-segment-button>
       <ion-segment-button value="chat">
-        <ion-label>Vista Empleado</ion-label>
+        <ion-label>Notificaciones</ion-label>
       </ion-segment-button>
     </ion-segment>
   </ion-toolbar>
 </ion-header>
 
-<ion-content color="light">
+<ion-content color="light" #contentChat [class.scanner-active]="escaneando">
 
-  <div class="admin-container" *ngIf="vistaActual === 'admin'">
-    
+  <div class="admin-container" *ngIf="vistaActual === 'admin' && !escaneando">
     <ion-segment [(ngModel)]="filtroAdmin" mode="ios" class="segment-admin">
-      <ion-segment-button value="vencimientos">
-        <ion-label>Vencimientos</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="stock">
-        <ion-label>Control de Stock</ion-label>
-      </ion-segment-button>
+      <ion-segment-button value="vencimientos"><ion-label>Vencimientos</ion-label></ion-segment-button>
+      <ion-segment-button value="stock"><ion-label>Control de Stock</ion-label></ion-segment-button>
     </ion-segment>
 
+    <div style="display: flex; align-items: center; padding: 10px 15px; background: #f4f5f800;">
+      <ion-searchbar placeholder="Buscar nombre o código..." 
+      [(ngModel)]="textoBusqueda" 
+      (ionInput)="buscarProducto($event)"
+      (ionClear)="limpiarBusqueda()"
+        showClearButton="always" 
+      style="padding: 0; flex: 1; --background: #ffffff00; color: #ffffff;"></ion-searchbar>
+      
+      <ion-button fill="clear" color="primary" (click)="escanearParaBuscar()" style="margin-right: -10px;">
+        <ion-icon slot="icon-only" name="barcode-outline" style="font-size: 28px;"></ion-icon>
+      </ion-button>
+    </div>
+
     <div *ngIf="filtroAdmin === 'vencimientos'">
-      <div class="header-resumen">
-        <p>Próximos a vencer ordenados por urgencia.</p>
+      <div class="header-resumen"><p>Próximos a vencer ordenados por urgencia.</p></div>
+      
+      <div *ngIf="productosPorVencer.length === 0" class="ion-text-center" style="margin-top: 20px; color: #888;">
+        No hay resultados para mostrar.
       </div>
 
-      <ion-list inset="true">
-        <ion-item *ngFor="let prod of productosPorVencer" button detail="true" (click)="irAlProducto({producto: prod})">
+      <ion-list inset="true" *ngIf="productosPorVencer.length > 0">
+        <ion-item *ngFor="let prod of productosPorVencer" button detail="true" (click)="irAlProductoAdmin(prod)">
           <ion-icon [color]="getColorBadge(calcularDias(prod.fechaVencimiento))" name="time-outline" slot="start"></ion-icon>
           <ion-label>
             <h2 style="font-weight: bold;">{{ prod.nombre }}</h2>
             <p>Stock actual: {{ prod.stock }} unid.</p>
           </ion-label>
-
           <div slot="end" class="dias-badge">
             <ion-badge [color]="getColorBadge(calcularDias(prod.fechaVencimiento))">
               <span *ngIf="calcularDias(prod.fechaVencimiento) > 0">En {{ calcularDias(prod.fechaVencimiento) }} días</span>
               <span *ngIf="calcularDias(prod.fechaVencimiento) === 0">Vence Hoy</span>
               <span *ngIf="calcularDias(prod.fechaVencimiento) < 0">Vencido</span>
             </ion-badge>
-            <ion-note class="fecha-nota">{{ obtenerFecha(prod.fechaVencimiento) | date:'dd/MM/yyyy' }}</ion-note>
+            <ion-note class="fecha-nota" *ngIf="prod.fechaVencimiento && prod.fechaVencimiento !== 'Sin vencimiento'">
+              {{ obtenerFecha(prod.fechaVencimiento) | date:'dd/MM/yyyy' }}
+            </ion-note>
           </div>
         </ion-item>
       </ion-list>
     </div>
 
     <div *ngIf="filtroAdmin === 'stock'">
-      <div class="header-resumen">
-        <p>Inventario ordenado por cantidad disponible.</p>
+      <div class="header-resumen"><p>Inventario ordenado por cantidad disponible.</p></div>
+      
+      <div *ngIf="productosPorStock.length === 0" class="ion-text-center" style="margin-top: 20px; color: #888;">
+        No hay resultados para mostrar.
       </div>
 
-      <ion-list inset="true">
-        <ion-item *ngFor="let prod of productosPorStock" button detail="true" (click)="irAlProducto({producto: prod})">
+      <ion-list inset="true" *ngIf="productosPorStock.length > 0">
+        <ion-item *ngFor="let prod of productosPorStock" button detail="true" (click)="irAlProductoAdmin(prod)">
           <ion-icon [color]="getColorStock(prod.stock, prod.stockMinimo)" name="cube-outline" slot="start"></ion-icon>
-          
           <ion-label>
             <h2 style="font-weight: bold;">{{ prod.nombre }}</h2>
             <p *ngIf="prod.stockMinimo !== null">Mínimo ideal: {{ prod.stockMinimo }} unid.</p>
-            <p *ngIf="prod.stockMinimo === null">Sin alerta mínima configurada</p>
+            <p *ngIf="prod.stockMinimo === null">Sin alerta mínima</p>
           </ion-label>
-
           <div slot="end" class="dias-badge">
-            <ion-badge [color]="getColorStock(prod.stock, prod.stockMinimo)">
-              {{ prod.stock }} {{ prod.medida || 'unid.' }}
-            </ion-badge>
+            <ion-badge [color]="getColorStock(prod.stock, prod.stockMinimo)">{{ prod.stock }} unid.</ion-badge>
             <ion-note class="fecha-nota" *ngIf="prod.stock !== null && prod.stock <= 0">Agotado</ion-note>
           </div>
         </ion-item>
       </ion-list>
     </div>
-
   </div>
 
-  <div class="chat-container" *ngIf="vistaActual === 'chat'">
-    <div class="fecha-separador">Últimas alertas del sistema</div>
-
-    <div *ngFor="let alerta of alertas" class="chat-bubble" [ngClass]="alerta.tipo" (click)="irAlProducto(alerta)">
-      <div class="mensaje">{{ alerta.mensaje }}</div>
-      <div class="hora">{{ alerta.fecha }}</div>
+  <div class="chat-container" *ngIf="vistaActual === 'chat' && !escaneando">
+    <div *ngIf="historialAgrupado.length === 0" class="fecha-separador" style="margin-top: 30px;">
+      Aún no hay registros en el historial.
     </div>
+
+    <ng-container *ngFor="let grupo of historialAgrupado">
+      <div class="fecha-sticky"><span class="fecha-texto">{{ grupo.fechaTitulo }}</span></div>
+
+      <div *ngFor="let evento of grupo.eventos" class="chat-bubble" [ngStyle]="obtenerEstiloBurbuja(evento.tipo)" (click)="irAlProductoHistorial(evento)">
+        <div class="mensaje">{{ evento.mensaje }}</div>
+        <div class="hora">{{ formatearHora(evento.fecha) }}</div>
+      </div>
+    </ng-container>
   </div>
 
+  <div *ngIf="escaneando" class="scanner-overlay">
+    <h2 class="scanner-text">Escanea para buscar alerta</h2>
+    <div class="scanner-box">
+      <div class="laser"></div>
+    </div>
+    <ion-button (click)="detenerEscaneo()" color="danger" class="btn-cancelar">
+      Cancelar Escaneo
+    </ion-button>
+  </div>
+
+  <ion-modal [isOpen]="modalConfigAbierto" (didDismiss)="cerrarConfiguracion()">
+    <ng-template>
+      <ion-header class="ion-no-border">
+        <ion-toolbar color="light">
+          <ion-title>Ajustes de alertas de notificaciones</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="cerrarConfiguracion()">Cancelar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content color="light" class="ion-padding" *ngIf="configActual">
+        <div class="config-section">
+          <h3 class="config-title">Limpieza de Base de Datos</h3>
+          <p class="config-desc">Configura el límite de historial. Los mensajes más antiguos se borrarán automáticamente para no consumir almacenamiento de Firebase.</p>
+          <ion-item lines="none" class="item-redondeado">
+            <ion-label>Conservar últimos:</ion-label>
+            <ion-select [(ngModel)]="configActual.limiteMensajes" interface="action-sheet" slot="end">
+              <ion-select-option [value]="25">25 mensajes</ion-select-option>
+              <ion-select-option [value]="50">50 mensajes</ion-select-option>
+              <ion-select-option [value]="100">100 mensajes</ion-select-option>
+              <ion-select-option [value]="200">200 mensajes</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </div>
+
+        <div class="config-section">
+          <h3 class="config-title">Personalización de Chat</h3>
+          <p class="config-desc">Selecciona los colores de fondo y borde (rueda de colores) para cada tipo de aviso en el historial.</p>
+          <ion-list inset="true" class="lista-colores">
+            <ion-item *ngFor="let tipo of tiposAlerta">
+              <ion-label style="font-size: 14px;">{{ tipo.label }}</ion-label>
+              <div slot="end" class="color-picker-group">
+                <input type="color" [(ngModel)]="configActual.colores[tipo.key].fondo" title="Color de Fondo">
+                <input type="color" [(ngModel)]="configActual.colores[tipo.key].borde" title="Color de Borde">
+              </div>
+            </ion-item>
+          </ion-list>
+        </div>
+
+        <ion-button expand="block" style="margin-top: 30px; --border-radius: 12px;" (click)="guardarConfiguracion()">
+          Guardar Cambios
+        </ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 </ion-content>

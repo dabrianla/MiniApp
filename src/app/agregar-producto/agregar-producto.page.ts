@@ -9,11 +9,11 @@ import {
   LoadingController, AlertController, IonCard, IonCardContent, IonList, IonToggle, IonFooter
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-// 🟢 Corregí el nombre del ícono del calendario
 import { barcodeOutline, cameraOutline, imageOutline, saveOutline, createOutline, trashOutline, closeOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, scaleOutline, alertCircleOutline, calendarOutline} from 'ionicons/icons';
 import { InventarioService, Producto } from '../services/inventario';
-import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
+import { BarcodeScanner, SupportedFormat } from '@capacitor-community/barcode-scanner';
 import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capacitor/camera';
+
 
 @Component({
   selector: 'app-agregar-producto',
@@ -42,6 +42,7 @@ export class AgregarProductoPage {
   };
 
   escaneando: boolean = false;
+  esEdicion: boolean = false; // 🟢 Nueva variable para saber si estamos sobreescribiendo
 
   private inventarioService = inject(InventarioService);
   private router = inject(Router);
@@ -54,6 +55,7 @@ export class AgregarProductoPage {
   }
 
   // --- 1. GUARDAR PRODUCTO ---
+ // --- 1. GUARDAR PRODUCTO ---
   async guardarProducto() {
     if (!this.nuevoProducto.nombre || !this.nuevoProducto.precio) {
       const alert = await this.alertController.create({
@@ -71,10 +73,11 @@ export class AgregarProductoPage {
         (p) => p.codigoBarras === codigoA_Buscar
       );
 
-      if (productoExistente) {
+      // 🟢 Modificamos esto: Solo bloquea si NO estamos en modo edición
+      if (productoExistente && !this.esEdicion) {
         const alert = await this.alertController.create({
-          header: '❌ Código Duplicado ❌',
-          message: `Ya existe un producto con este código de barras: ${productoExistente.nombre}. Búscalo en el inventario si deseas actualizar su stock.`,
+          header: 'Código Duplicado ',
+          message: `Ya existe un producto con este código de barras: ${productoExistente.nombre}. Ingresa al control de stock para ingresar más unidades.`,
           buttons: ['Entendido']
         });
         await alert.present();
@@ -83,7 +86,7 @@ export class AgregarProductoPage {
     }
 
     const loading = await this.loadingController.create({
-      message: 'Subiendo producto...', 
+      message: this.esEdicion ? 'Actualizando producto...' : 'Subiendo producto...', 
       spinner: 'circles'
     });
     await loading.present();
@@ -91,20 +94,21 @@ export class AgregarProductoPage {
     try {
       let urlImagenFinal = '';
 
-      if (this.nuevoProducto.imagen) {
+      // Si tiene una imagen nueva en base64 (y no una URL de Firebase de un producto existente)
+      if (this.nuevoProducto.imagen && !this.nuevoProducto.imagen.startsWith('http')) {
         urlImagenFinal = await this.inventarioService.subirImagen(
           this.nuevoProducto.imagen, 
           this.nuevoProducto.nombre.replace(/\s+/g, '_') 
         );
+      } else {
+        urlImagenFinal = this.nuevoProducto.imagen; // Conserva la imagen que ya tenía
       }
 
-      // 🟢 TRATAMIENTO DE LA FECHA (PASA DE TEXTO A OBJETO DATE NATIVO)
+      // TRATAMIENTO DE LA FECHA
       let fechaFinalDate = null;
-      if (this.nuevoProducto.fechaVencimiento && this.nuevoProducto.fechaVencimiento.trim() !== '') {
-        // Separamos el texto "2025-10-31" en una lista [2025, 10, 31]
+      if (this.nuevoProducto.fechaVencimiento && typeof this.nuevoProducto.fechaVencimiento === 'string' && this.nuevoProducto.fechaVencimiento.trim() !== '') {
         const partesFecha = this.nuevoProducto.fechaVencimiento.split('-');
         if(partesFecha.length === 3) {
-          // Javascript cuenta los meses desde el 0 (Enero es 0). Por eso el -1 en el mes.
           fechaFinalDate = new Date(parseInt(partesFecha[0]), parseInt(partesFecha[1]) - 1, parseInt(partesFecha[2]));
         }
       }
@@ -113,15 +117,24 @@ export class AgregarProductoPage {
         ...this.nuevoProducto,
         imagen: urlImagenFinal, 
         codigoBarras: this.nuevoProducto.codigoBarras || '',
-        fechaVencimiento: fechaFinalDate // 🟢 Se guarda un Date real, Firebase lo convierte a Timestamp
+        fechaVencimiento: fechaFinalDate || this.nuevoProducto.fechaVencimiento 
       };
 
-      await this.inventarioService.agregarProducto(datosParaGuardar);
+      // 🟢 AQUÍ ESTÁ LA SOLUCIÓN DEFINITIVA A LOS DUPLICADOS
+      if (this.esEdicion && this.nuevoProducto.id) {
+        // SI ES EDICIÓN: Usamos el ID interno de Firebase para buscarlo y sobreescribir sus datos
+        await this.inventarioService.actualizarProductoCompleto(this.nuevoProducto.id, datosParaGuardar);
+      } else {
+        // SI ES NUEVO: Nos aseguramos de borrar el id temporal por si acaso, y lo creamos desde cero
+        delete datosParaGuardar.id;
+        await this.inventarioService.agregarProducto(datosParaGuardar);
+      }
+
       await loading.dismiss();
       
       const successAlert = await this.alertController.create({
         header: '¡Éxito!',
-        message: 'Producto guardado correctamente en el inventario.',
+        message: this.esEdicion ? 'Producto actualizado correctamente.' : 'Producto guardado correctamente en el inventario.',
         buttons: ['Genial']
       });
       await successAlert.present();
@@ -139,8 +152,7 @@ export class AgregarProductoPage {
       await errorAlert.present();
     }
   }
-
-  // --- 2. ESCÁNER DE CÓDIGO DE BARRAS ---
+  // --- 2. ESCÁNER DE CÓDIGO DE BARRAS MEJORADO ---
   async escanearCodigo() {
     try {
       await BarcodeScanner.checkPermission({ force: true });
@@ -148,12 +160,70 @@ export class AgregarProductoPage {
       document.body.classList.add('qrscanner');
       this.escaneando = true;
 
-      const result = await BarcodeScanner.startScan();
+      const opciones = {
+        targetedFormats: [
+          SupportedFormat.EAN_13, 
+          SupportedFormat.EAN_8, 
+          SupportedFormat.UPC_A, 
+          SupportedFormat.UPC_E
+        ]
+      };
+
+      const result = await BarcodeScanner.startScan(opciones);
 
       if (result.hasContent) {
-        this.ngZone.run(() => {
-          this.nuevoProducto.codigoBarras = result.content.trim();
-        });
+        const codigoLeido = result.content.trim();
+
+        if (codigoLeido.length < 8) {
+          const alertReflejo = await this.alertController.create({
+            header: 'Código irreconocible',
+            message: 'Parece que la cámara leyó un reflejo o el código está borroso. Intenta acercar la cámara lentamente.',
+            buttons: ['Intentar de nuevo']
+          });
+          await alertReflejo.present();
+          return;
+        }
+
+        // 🟢 3. NUEVO: Verificamos si el producto ya existe
+        const productoExistente = this.inventarioService.productos.find(
+          (p) => p.codigoBarras === codigoLeido
+        );
+
+        if (productoExistente) {
+          // Si el producto existe, le preguntamos al usuario si desea sobreescribirlo
+          const alertExiste = await this.alertController.create({
+            header: 'Producto ya registrado',
+            message: `Este producto (${productoExistente.nombre}) ya se encuentra en el catálogo. ¿Quieres cargar sus datos para sobrescribirlo o actualizarlo?`,
+            buttons: [
+              {
+                text: 'No, cancelar',
+                role: 'cancel'
+              },
+              {
+                text: 'Sí, sobrescribir',
+                handler: () => {
+                  this.ngZone.run(() => {
+                    this.esEdicion = true; // Marcamos que estamos sobreescribiendo
+                    // Copiamos los datos del producto existente al formulario
+                    this.nuevoProducto = { ...productoExistente };
+                    
+                    // Si la fecha de vencimiento es un objeto, lo pasamos a string para el input
+                    if (this.nuevoProducto.fechaVencimiento && typeof this.nuevoProducto.fechaVencimiento.toDate === 'function') {
+                      this.nuevoProducto.fechaVencimiento = this.nuevoProducto.fechaVencimiento.toDate().toISOString().split('T')[0];
+                    }
+                  });
+                }
+              }
+            ]
+          });
+          await alertExiste.present();
+        } else {
+          // Si el producto es totalmente nuevo, lo asignamos de forma normal
+          this.ngZone.run(() => {
+            this.esEdicion = false;
+            this.nuevoProducto.codigoBarras = codigoLeido;
+          });
+        }
       }
     } catch (error) {
       console.error('Error al escanear', error);

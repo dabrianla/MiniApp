@@ -11,11 +11,11 @@ import {
   IonButton, AlertController,
   IonItemSliding, IonItemOptions, IonItemOption,
   IonModal, IonCard, IonCardContent, IonInput,
-  LoadingController, IonToggle, IonFooter
+  LoadingController, IonToggle, IonFooter,IonItemGroup,IonItemDivider
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 // 👇 AQUI AGREGAMOS cubeOutline y pricetagOutline
-import { add, barcodeOutline, createOutline, trashOutline, saveOutline, closeOutline, cameraOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline } from 'ionicons/icons';import { InventarioService, Producto } from '../services/inventario';
+import { add, barcodeOutline, createOutline, trashOutline, saveOutline, closeOutline, cameraOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, timeOutline, caretDownOutline, checkmarkCircleOutline} from 'ionicons/icons';import { InventarioService, Producto } from '../services/inventario';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { AuthService } from '../services/auth';
 import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capacitor/camera'; // <-- IMPORTANTE
@@ -34,7 +34,7 @@ import { ActivatedRoute } from '@angular/router'; // 🟢 Agrega esto arriba
     IonFab, IonFabButton, IonIcon,
     IonSelect, IonSelectOption,
     IonButton, IonItemSliding, IonItemOptions, IonItemOption,
-    IonModal, IonCard, IonCardContent, IonInput, IonToggle, IonFooter
+    IonModal, IonCard, IonCardContent, IonInput, IonToggle, IonFooter,IonItemGroup,IonItemDivider
   ]
 })
 export class ProductosPage implements OnInit {
@@ -63,13 +63,18 @@ export class ProductosPage implements OnInit {
   detalleModalAbierto: boolean = false;
   productoDetalle: any = {};
 
+  // --- VARIABLES PARA EL MODAL DE MARCAS ---
+  modalMarcasAbierto: boolean = false;
+  marcasAgrupadas: { letra: string, marcas: string[] }[] = [];
+  letrasDisponibles: string[] = [];
+
   constructor(
     public inventarioService: InventarioService, 
     private cdr: ChangeDetectorRef, 
     private alertController: AlertController,
   ) {
     // 👇 AQUI REGISTRAMOS cubeOutline y pricetagOutline
-    addIcons({ add, barcodeOutline, createOutline, trashOutline, saveOutline, closeOutline, cameraOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline });
+    addIcons({ add, barcodeOutline, createOutline, trashOutline, saveOutline, closeOutline, cameraOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, timeOutline, caretDownOutline, checkmarkCircleOutline });
   }
 
   ngOnInit() {
@@ -121,20 +126,49 @@ export class ProductosPage implements OnInit {
   }
 
   // 2. La función que hace la magia de extraer solo las marcas correspondientes
-  actualizarMarcasDisponibles() {
+ actualizarMarcasDisponibles() {
     let productosParaMarcas = this.inventarioService.productos;
 
     if (this.filtroCategoria !== 'Todas') {
       productosParaMarcas = productosParaMarcas.filter(p => p.categoria === this.filtroCategoria);
     }
 
-    // Extraemos las marcas únicas de los productos ya filtrados
+    // Extraemos las marcas únicas
     this.marcasUnicas = [...new Set(productosParaMarcas.map(p => p.marca).filter(m => m) as string[])];
 
-    // Si la marca que el usuario tenía seleccionada antes ya no existe en esta nueva categoría,
-    // la devolvemos a "Todas" para que la lista no quede vacía por error.
+    // 🟢 NUEVO: Ordenar y agrupar alfabéticamente para el panel Premium
+    const marcasOrdenadas = [...this.marcasUnicas].sort((a, b) => a.localeCompare(b));
+    const grupos = marcasOrdenadas.reduce((acc: any, marca) => {
+      const letra = marca.charAt(0).toUpperCase();
+      if (!acc[letra]) acc[letra] = [];
+      acc[letra].push(marca);
+      return acc;
+    }, {});
+
+    this.marcasAgrupadas = Object.keys(grupos).map(letra => {
+      return { letra: letra, marcas: grupos[letra] };
+    });
+    this.letrasDisponibles = Object.keys(grupos);
+
     if (this.filtroMarca !== 'Todas' && !this.marcasUnicas.includes(this.filtroMarca)) {
       this.filtroMarca = 'Todas';
+    }
+  }
+
+  // 🟢 NUEVAS FUNCIONES PARA EL MODAL DE MARCAS
+  abrirFiltroMarcas() { this.modalMarcasAbierto = true; }
+  cerrarFiltroMarcas() { this.modalMarcasAbierto = false; }
+
+  seleccionarMarca(marca: string) {
+    this.filtroMarca = marca;
+    this.aplicarFiltros();
+    this.cerrarFiltroMarcas();
+  }
+
+  saltarALetra(letra: string) {
+    const elemento = document.getElementById('letra-' + letra);
+    if (elemento) {
+      elemento.scrollIntoView({ behavior: 'smooth' });
     }
   }
 
