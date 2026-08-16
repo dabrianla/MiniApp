@@ -14,7 +14,7 @@ export interface ProductoFactura {
 export class AiFacturasService {
   private http = inject(HttpClient);
   // Nota: En producción, se recomienda obtener esta clave de un backend seguro.
-  private apiKey = 'AQ.Ab8RN6IvROp1iwN4_jg-Vc2y1MoXGRiciZ-mGNOEESUFtMMP9Q'; 
+  private apiKey = ''; 
   private apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.apiKey}`;
 
   async analizarFactura(base64Image: string): Promise<ProductoFactura[]> {
