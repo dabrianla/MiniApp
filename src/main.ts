@@ -10,12 +10,15 @@ import { getStorage, provideStorage } from '@angular/fire/storage';
 import { getAuth, provideAuth } from '@angular/fire/auth'; // <-- NUEVO: Importamos el módulo de Auth
 import { getApp } from '@angular/fire/app';
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from '@angular/fire/firestore';
+// importamos para poder usar HttpClient en el servicio de IA
+import { provideHttpClient } from '@angular/common/http';
 
 bootstrapApplication(AppComponent, {
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     provideIonicAngular(),
     provideRouter(routes, withPreloading(PreloadAllModules)), 
+    provideHttpClient(),
     provideFirebaseApp(() => initializeApp({ 
       projectId: "miniapp-inventario", 
       appId: "1:633727289203:web:01c607e63eeef7b8412706", 

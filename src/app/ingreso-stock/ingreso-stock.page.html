@@ -1,5 +1,5 @@
-<ion-header class="ion-no-border" *ngIf="!scannerActivo">
-  <ion-toolbar color="secondary">
+<ion-header *ngIf="!scannerActivo">
+  <ion-toolbar color="primary">
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
@@ -7,102 +7,143 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [style.--background]="scannerActivo ? 'transparent' : 'var(--ion-color-dark, black)'">
-
+<ion-content [style.--background]="scannerActivo ? 'transparent' : ''" class="ion-padding">
+  
   <div *ngIf="!scannerActivo">
     
-    <div *ngIf="!productoSeleccionado" class="buscador-container">
-      <div class="header-resumen">
-        <h2>Llegada de Lotes</h2>
-        <p>Escanea o busca el producto para sumarlo al stock y asignarle su vencimiento.</p>
-      </div>
+    <ion-button expand="block" shape="round" color="dark" (click)="escanearFactura()" class="ion-margin-bottom">
+      <ion-icon name="camera-outline" slot="start"></ion-icon>
+      Escanear Factura con IA
+    </ion-button>
 
-      <div class="search-scan-row">
-        <ion-searchbar 
-          [(ngModel)]="textoBusqueda" 
-          (ionInput)="buscarProducto($event)" 
-          placeholder="Buscar..." 
-          animated="true"
-          mode="ios"
-          class="custom-search">
-        </ion-searchbar>
+    <div *ngIf="productosDetectados.length > 0" class="ia-resultados-container">
+      
+      <ion-list-header style="text-align: center; margin-bottom: 10px;">
+        <ion-label>
+          <h1 style="font-weight: bold;">Productos Detectados</h1>
+          <p>Revisa las cantidades y vincula los nuevos</p>
+        </ion-label>
+      </ion-list-header>
 
-        <ion-button color="primary" class="btn-escanear" (click)="escanearCodigo()">
-          <ion-icon name="barcode-outline" slot="icon-only"></ion-icon>
-        </ion-button>
-      </div>
-
-      <ion-list inset="true" *ngIf="productosEncontrados.length > 0">
-        <ion-item *ngFor="let p of productosEncontrados" button (click)="seleccionarProducto(p)">
-          <ion-avatar slot="start">
-            <img [src]="p.imagen || 'assets/shapes.svg'" />
-          </ion-avatar>
-          <ion-label>
-            <h2 style="font-weight: 600;">{{ p.nombre }}</h2>
-            <p>Stock actual: {{ p.stock || 0 }} unid.</p>
-          </ion-label>
-        </ion-item>
-      </ion-list>
-    </div>
-
-    <div *ngIf="productoSeleccionado" class="formulario-lote">
-      <ion-card class="producto-card">
+      <ion-card *ngFor="let item of productosDetectados; let i = index" 
+                [color]="item.enlazado ? 'light' : 'warning'">
+        
         <ion-card-content>
-          <div class="info-producto">
-            <img [src]="productoSeleccionado.imagen || 'assets/shapes.svg'" class="img-preview" />
-            <div>
-              <h3>{{ productoSeleccionado.nombre }}</h3>
-              <p>Stock actual: <strong>{{ productoSeleccionado.stock || 0 }}</strong></p>
-            </div>
+          <ion-item lines="none" [color]="item.enlazado ? 'light' : 'warning'">
+            <ion-icon [name]="item.enlazado ? 'checkmark-circle-outline' : 'alert-circle-outline'" 
+                      slot="start" 
+                      [color]="item.enlazado ? 'success' : 'danger'"></ion-icon>
+            <ion-label>
+              <h2><strong>{{ item.descripcionOriginal }}</strong></h2>
+              <p *ngIf="item.enlazado" style="color: green;">✅ Catálogo: {{ item.productoDB?.nombre }}</p>
+              <p *ngIf="!item.enlazado" style="color: red; font-weight: bold;">⚠️ Requiere vincular</p>
+            </ion-label>
+            <ion-button fill="clear" color="danger" slot="end" (click)="quitarProducto(i)">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </ion-item>
+
+          <ion-row class="ion-margin-top">
+            <ion-col size="6">
+              <ion-item lines="underline" [color]="item.enlazado ? 'light' : 'warning'">
+                <ion-label position="stacked">Ingresan (Unid.)</ion-label>
+                <ion-input type="number" [(ngModel)]="item.cantidadFactura"></ion-input>
+              </ion-item>
+            </ion-col>
+            <ion-col size="6">
+              <ion-item lines="underline" [color]="item.enlazado ? 'light' : 'warning'">
+                <ion-label position="stacked">Costo Unit. ($)</ion-label>
+                <ion-input type="number" [(ngModel)]="item.precioCostoUnitario"></ion-input>
+              </ion-item>
+            </ion-col>
+          </ion-row>
+
+          <div class="accion-vincular" *ngIf="!item.enlazado" style="margin-top: 15px;">
+            <ion-button expand="block" color="dark" (click)="vincularProductoNuevo(i)">
+              <ion-icon name="barcode-outline" slot="start"></ion-icon>
+              Escanear código físico
+            </ion-button>
           </div>
         </ion-card-content>
       </ion-card>
 
-      <div class="campos-ingreso">
-        <ion-item class="input-moderno">
-          <ion-icon name="cube-outline" slot="start" color="primary"></ion-icon>
-          <ion-input 
-            [(ngModel)]="cantidadIngreso" 
-            type="number" 
-            label="Cantidad Entrante" 
-            labelPlacement="floating" 
-            placeholder="Ej: 24">
-          </ion-input>
-        </ion-item>
-
-        <ion-item class="input-moderno" style="margin-top: 15px;">
-          <ion-input 
-            [(ngModel)]="fechaVencimientoLote" 
-            type="date" 
-            label="Vencimiento (Opcional)" 
-            labelPlacement="floating">
-          </ion-input>
-        </ion-item>
-      </div>
-
-      <div class="botones-accion">
-        <ion-button expand="block" color="primary" class="btn-guardar" (click)="guardarIngreso()">
-          <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-          Registrar Ingreso
-        </ion-button>
-        
-        <ion-button expand="block" fill="clear" color="danger" (click)="cancelarIngreso()">
-          Cancelar
-        </ion-button>
+      <ion-button expand="block" color="success" class="ion-margin-top" 
+                  style="height: 55px; font-weight: bold; font-size: 1.1rem;"
+                  (click)="guardarStockIA()" 
+                  [disabled]="hayProductosSinVincular()">
+        CONFIRMAR INGRESO TOTAL
+      </ion-button>
+      
+      <div style="text-align: center; margin-top: 25px;">
+        <ion-note>— O ingresa un producto manual —</ion-note>
       </div>
     </div>
+
+
+    <div *ngIf="productosDetectados.length === 0" style="margin-top: 15px;">
+      <ion-row>
+        <ion-col size="10">
+          <ion-searchbar 
+            placeholder="Buscar producto o código..." 
+            [(ngModel)]="textoBusqueda"
+            (ionInput)="buscarProducto($event)">
+          </ion-searchbar>
+        </ion-col>
+        <ion-col size="2" style="display: flex; align-items: center; justify-content: center;">
+          <ion-button color="primary" (click)="escanearCodigo()">
+            <ion-icon name="barcode-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-col>
+      </ion-row>
+
+      <ion-list *ngIf="productosEncontrados.length > 0">
+        <ion-item *ngFor="let prod of productosEncontrados" button (click)="seleccionarProducto(prod)">
+          <ion-label>
+            <h2>{{ prod.nombre }}</h2>
+            <p>Stock actual: {{ prod.stock || 0 }} | Código: {{ prod.codigoBarras }}</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+
+      <ion-card *ngIf="productoSeleccionado" class="ion-margin-top">
+        <ion-card-content>
+          <ion-item lines="none">
+            <ion-label>
+              <h2><strong>{{ productoSeleccionado.nombre }}</strong></h2>
+              <p>Stock actual: {{ productoSeleccionado.stock || 0 }}</p>
+            </ion-label>
+            <ion-button fill="clear" color="medium" slot="end" (click)="cancelarIngreso()">
+              <ion-icon name="close-circle-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </ion-item>
+
+          <ion-row>
+            <ion-col size="6">
+              <ion-item>
+                <ion-label position="stacked">Cantidad *</ion-label>
+                <ion-input type="number" [(ngModel)]="cantidadIngreso" placeholder="Ej. 10"></ion-input>
+              </ion-item>
+            </ion-col>
+            <ion-col size="6">
+              <ion-item>
+                <ion-label position="stacked">Vence (Opcional)</ion-label>
+                <ion-input type="date" [(ngModel)]="fechaVencimientoLote"></ion-input>
+              </ion-item>
+            </ion-col>
+          </ion-row>
+
+          <ion-button expand="block" color="success" class="ion-margin-top" (click)="guardarIngreso()">
+            Sumar al Inventario
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
   </div>
 
-  <div *ngIf="scannerActivo" class="scanner-overlay">
-    <p class="scanner-text">Apunta al código de barras</p>
-    
-    <div class="scanner-box">
-      <div class="laser"></div>
-    </div>
-    
-    <ion-button color="danger" class="btn-cancelar" (click)="detenerEscaner()">
-      <ion-icon name="close-circle-outline" slot="start"></ion-icon>
-      Cancelar
+  <div *ngIf="scannerActivo" style="height: 100%; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 40px;">
+    <ion-button color="danger" shape="round" (click)="detenerEscaner()">
+      Cancelar Escáner
     </ion-button>
   </div>
 
