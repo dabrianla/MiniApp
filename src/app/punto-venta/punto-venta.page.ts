@@ -1,6 +1,7 @@
 import { Component, NgZone, inject, HostListener, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { 
   IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, 
   IonButton, IonIcon, IonList, IonItem, IonLabel, IonNote, IonFooter,
@@ -8,14 +9,17 @@ import {
   IonThumbnail, IonMenuButton, IonModal, IonSegment, IonSegmentButton, IonInput
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { barcodeOutline, trashOutline, addCircleOutline, removeCircleOutline, cartOutline, checkmarkCircleOutline, searchOutline, closeCircleOutline, backspaceOutline, scaleOutline, cashOutline, cardOutline, walletOutline, phonePortraitOutline,homeOutline, cameraOutline } from 'ionicons/icons'; 
-// 🟢 1. AGREGAMOS EL "SupportedFormat"
+import { 
+  barcodeOutline, trashOutline, addCircleOutline, removeCircleOutline, cartOutline, 
+  checkmarkCircleOutline, searchOutline, closeCircleOutline, closeOutline, backspaceOutline, 
+  scaleOutline, cashOutline, cardOutline, walletOutline, phonePortraitOutline, homeOutline, 
+  cameraOutline, storefrontOutline, lockClosedOutline, personOutline, flameOutline
+} from 'ionicons/icons'; 
 import { BarcodeScanner, SupportedFormat } from '@capacitor-community/barcode-scanner';
-import { InventarioService, Producto } from '../services/inventario';
+import { InventarioService, Producto, ConfigCigarro } from '../services/inventario';
 import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capacitor/camera';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-punto-venta',
@@ -23,9 +27,11 @@ import { Router } from '@angular/router';
   styleUrls: ['./punto-venta.page.scss'],
   standalone: true,
   imports: [
-    CommonModule, FormsModule, IonContent, IonHeader, IonTitle, IonToolbar, 
+    CommonModule, FormsModule, DecimalPipe,
+    IonContent, IonHeader, IonTitle, IonToolbar, 
     IonButtons, IonBackButton, IonButton, IonIcon, IonList, IonItem, IonLabel, 
-    IonNote, IonFooter, IonSearchbar, IonThumbnail, IonMenuButton, IonModal, IonSegment, IonSegmentButton, IonInput
+    IonNote, IonFooter, IonSearchbar, IonThumbnail, IonMenuButton, IonModal, 
+    IonSegment, IonSegmentButton, IonInput
   ]
 })
 export class PuntoVentaPage implements OnInit {
@@ -34,29 +40,45 @@ export class PuntoVentaPage implements OnInit {
   total: number = 0;
   textoBusqueda: string = '';
 
-  // 🟢 VARIABLES DEL POPUP DE INSTAGRAM
+  // Preview de producto (presión larga)
   productoPreview: Producto | null = null;
   previewActivo: boolean = false;
   private pressTimeout: any;
   private fuePresionLarga: boolean = false;
 
-  // 🟢 VARIABLES DEL BUSCADOR
-  terminoBusqueda: string = '';
+  // Buscador
   productosFiltrados: Producto[] = [];
 
-  // 🟢 VARIABLES DEL MODAL DE COBRO Y VUELTO (CORREGIDAS PARA EL HTML)
+  // Modal de cobro
   modalCobroAbierto: boolean = false;
-  metodoPago: 'efectivo' | 'tarjeta' | 'transferencia' = 'efectivo'; // Se agregó 'transferencia'
-  montoRecibido: number | null = null; // Cambiado de montoPagado a montoRecibido
+  metodoPago: 'efectivo' | 'tarjeta' | 'transferencia' = 'efectivo';
+  montoRecibido: number | null = null;
+  fotoTransferencia: string = '';
 
-  // 🟢 VARIABLES DE CONTROL DE CAJA
+  // Montos rápidos para efectivo
+  montosRapidos: number[] = [1000, 2000, 5000, 10000, 20000, 50000];
+
+  // Control de caja
   cajaAbierta: boolean = false;
   nombreCajero: string = '';
   fondoDeCaja: number | null = null;
   turnoActual: any = null;
 
-  // foto de transferencia
-  fotoTransferencia: string = '';
+  // Calculadora de verduras
+  mostrarCalculadora: boolean = false;
+  productoPesable: any = null;
+  modoCalculadora: 'peso' | 'monto' = 'peso';
+  inputCalculo: string = '';
+  tecladoFilas: string[][] = [
+    ['7', '8', '9'],
+    ['4', '5', '6'],
+    ['1', '2', '3'],
+  ];
+
+  // Panel de cigarros
+  panelCigarrosAbierto: boolean = false;
+  productosCigarros: Producto[] = [];
+  configCigarros: (ConfigCigarro & { cantidadTemp?: number })[] = [];
 
   private inventarioService = inject(InventarioService);
   private alertController = inject(AlertController);
@@ -65,36 +87,47 @@ export class PuntoVentaPage implements OnInit {
   private ngZone = inject(NgZone);
   private router = inject(Router);
 
+  // Exponer parseFloat para el template
+  parseFloat = parseFloat;
+
   constructor() {
-    addIcons({ barcodeOutline, trashOutline, addCircleOutline, removeCircleOutline, cartOutline, checkmarkCircleOutline, searchOutline, closeCircleOutline, backspaceOutline, scaleOutline, cashOutline, cardOutline, walletOutline, phonePortraitOutline, homeOutline, cameraOutline });
+    addIcons({ 
+      barcodeOutline, trashOutline, addCircleOutline, removeCircleOutline, cartOutline, 
+      checkmarkCircleOutline, searchOutline, closeCircleOutline, closeOutline, backspaceOutline, 
+      scaleOutline, cashOutline, cardOutline, walletOutline, phonePortraitOutline, homeOutline, 
+      cameraOutline, storefrontOutline, lockClosedOutline, personOutline, flameOutline
+    });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     const turnoGuardado = localStorage.getItem('turno_minimarket');
     if (turnoGuardado) {
       this.turnoActual = JSON.parse(turnoGuardado);
       this.cajaAbierta = true;
       this.nombreCajero = this.turnoActual.cajero;
     }
-  }
 
-  volverAlMenu() {
-    // Te redirige a la ruta principal. Si tu inicio es '/home', cámbialo aquí.
-    this.router.navigate(['/']); 
+    // Cargar productos cigarros y config
+    this.inventarioService.productos$.subscribe(prods => {
+      this.productosCigarros = prods.filter(p => this.inventarioService.esCigarro(p));
+    });
+
+    const cfg = await this.inventarioService.obtenerConfigCigarros();
+    this.configCigarros = (cfg.cigarros || []).map(c => ({ ...c, cantidadTemp: 0 }));
   }
 
   abrirCaja() {
-    if (this.nombreCajero.trim() === '' || this.fondoDeCaja === null || this.fondoDeCaja < 0) {
-      return; 
-    }
+    if (this.nombreCajero.trim() === '' || this.fondoDeCaja === null || this.fondoDeCaja < 0) return;
 
     this.turnoActual = {
       cajero: this.nombreCajero,
-      fondoCaja: this.fondoDeCaja, 
+      fondoCaja: this.fondoDeCaja,
       fechaInicio: new Date().toISOString(),
       ventas: [],
       totalEfectivo: 0,
       totalTarjeta: 0,
+      totalTransferencia: 0,
+      totalCigarros: 0,
       totalGeneral: 0
     };
 
@@ -102,21 +135,36 @@ export class PuntoVentaPage implements OnInit {
     this.cajaAbierta = true;
   }
 
- async confirmarCierreCaja() {
-    const efectivoEsperado = this.turnoActual.fondoCaja + this.turnoActual.totalEfectivo;
+  async confirmarCierreCaja() {
+    const efectivoEsperado = (this.turnoActual.fondoCaja || 0) + (this.turnoActual.totalEfectivo || 0);
+    const totalTarjeta = this.turnoActual.totalTarjeta || 0;
+    const totalTransferencia = this.turnoActual.totalTransferencia || 0;
+    const totalGeneral = this.turnoActual.totalGeneral || 0;
+    const cantVentas = this.turnoActual.ventas?.length || 0;
 
     const alert = await this.alertController.create({
-      header: 'Cerrar Turno',
-      message: `Cajero: <b>${this.nombreCajero}</b><br><br>
-                Fondo inicial: $${this.turnoActual.fondoCaja}<br>
-                Ventas en efectivo: $${this.turnoActual.totalEfectivo}<br>
-                <hr>
-                Deberías tener en tu estuche:<br>
-                <h2 style="color: #2dd36f; text-align: center; margin: 5px 0;">$${efectivoEsperado}</h2>`,
+      header: '📊 Resumen del Turno',
+      cssClass: 'alert-cierre-caja',
+      message: `
+        <div style="text-align:left; font-size:0.95rem; line-height:1.8;">
+          <b style="color:#ffce00">Cajero: ${this.nombreCajero}</b><br>
+          <span style="color:#aaa">Ventas realizadas: ${cantVentas}</span><br><br>
+          💵 Efectivo vendido: <b>$${totalGeneral - totalTarjeta - totalTransferencia}</b><br>
+          💳 Tarjeta: <b>$${totalTarjeta}</b><br>
+          📱 Transferencia: <b>$${totalTransferencia}</b><br>
+          <hr style="border-color:rgba(255,255,255,0.1); margin:10px 0;">
+          🧾 Total vendido: <b style="color:#2dd36f">$${totalGeneral}</b><br><br>
+          💰 Fondo inicial: <b>$${this.turnoActual.fondoCaja}</b><br>
+          <div style="background:rgba(45,211,111,0.15); border:1px solid #2dd36f; border-radius:8px; padding:10px; margin-top:10px; text-align:center;">
+            <span style="color:#aaa; font-size:0.85rem;">Deberías tener en tu estuche:</span><br>
+            <span style="color:#2dd36f; font-size:1.6rem; font-weight:900;">$${efectivoEsperado}</span>
+          </div>
+        </div>`,
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
         { 
-          text: 'Sí, Cerrar', 
+          text: 'Cerrar Turno', 
+          cssClass: 'btn-confirm-danger',
           handler: () => { this.ngZone.run(() => { this.ejecutarCierre(); }); } 
         }
       ]
@@ -125,11 +173,10 @@ export class PuntoVentaPage implements OnInit {
   }
 
   async ejecutarCierre() {
-    const loading = await this.loadingController.create({ message: 'Subiendo resumen del turno...', spinner: 'circles' });
+    const loading = await this.loadingController.create({ message: 'Guardando turno...', spinner: 'circles' });
     await loading.present();
 
     this.turnoActual.fechaFin = new Date().toISOString();
-    
     await this.inventarioService.guardarTurnoCaja(this.turnoActual);
     
     localStorage.removeItem('turno_minimarket');
@@ -142,6 +189,7 @@ export class PuntoVentaPage implements OnInit {
     await loading.dismiss();
   }
 
+  // ========== BUSCADOR ==========
   buscarProducto(event: any) {
     const termino = event.target.value?.toLowerCase() || '';
     if (!termino) {
@@ -149,27 +197,39 @@ export class PuntoVentaPage implements OnInit {
       return;
     }
     this.productosFiltrados = this.inventarioService.productos
-      .filter(p => p.nombre.toLowerCase().includes(termino))
-      .sort((a, b) => a.nombre.localeCompare(b.nombre)); 
+      .filter(p => p.nombre.toLowerCase().includes(termino) || (p.codigoBarras || '').includes(termino))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
   }
 
   agregarDesdeBuscador(producto: Producto, event?: Event) {
     if (this.fuePresionLarga) {
       setTimeout(() => this.fuePresionLarga = false, 50);
-      return; 
+      return;
+    }
+    // Si es verdura/pesable, abrir calculadora directamente
+    if (this.esVerduraOPesable(producto)) {
+      this.abrirCalculadora(producto);
+      return;
     }
     this.procesarIngresoAlCarrito(producto);
-    this.terminoBusqueda = '';
     this.textoBusqueda = '';
     this.productosFiltrados = [];
   }
 
+  agregarDesdeListaProductos(producto: Producto) {
+    this.procesarIngresoAlCarrito(producto);
+  }
+
+  esVerduraOPesable(prod: Producto): boolean {
+    const cat = (prod.categoria || '').toLowerCase();
+    return cat === 'verdulería' || cat === 'panadería' || cat === 'verdura' || cat === 'panaderia';
+  }
+
+  // ========== PRESIÓN LARGA ==========
   @HostListener('window:mouseup')
   @HostListener('window:touchend')
   @HostListener('window:touchcancel')
-  liberarPantalla() {
-    this.terminarPresion();
-  }
+  liberarPantalla() { this.terminarPresion(); }
 
   iniciarPresion(producto: Producto, event: Event) {
     this.fuePresionLarga = false;
@@ -190,31 +250,27 @@ export class PuntoVentaPage implements OnInit {
   }
 
   terminarPresion(event?: Event) {
-    clearTimeout(this.pressTimeout); 
+    clearTimeout(this.pressTimeout);
     if (event) event.stopPropagation();
     this.ngZone.run(() => {
       this.previewActivo = false;
       setTimeout(() => {
         this.productoPreview = null;
-        this.fuePresionLarga = false; 
-      }, 250); 
+        this.fuePresionLarga = false;
+      }, 250);
     });
   }
 
   prevenirMenu(event: Event) { event.preventDefault(); }
 
-  // 🟢 2. ESCÁNER BLINDADO CONTRA REFLEJOS
-// 🟢 2. ESCÁNER BLINDADO CONTRA REFLEJOS
+  // ========== ESCÁNER ==========
   async escanearParaVender() {
     try {
       await BarcodeScanner.checkPermission({ force: true });
       BarcodeScanner.hideBackground();
-      
-      // 🟢 AQUÍ ESTÁ EL CAMBIO: Usamos 'qrscanner' igual que en agregar-producto
       document.body.classList.add('qrscanner');
       this.escaneando = true;
 
-      // Restringimos los formatos
       const opciones = {
         targetedFormats: [
           SupportedFormat.EAN_13, 
@@ -228,11 +284,9 @@ export class PuntoVentaPage implements OnInit {
       
       if (result.hasContent) {
         const codigoLeido = result.content.trim();
-
-        // VALIDACIÓN: Bloqueamos si leyó basura o reflejos
         if (codigoLeido.length < 8) {
           const toast = await this.toastController.create({
-            message: '⚠️ Código borroso o reflejo. Intenta escanear de nuevo.',
+            message: '⚠️ Código borroso. Intenta escanear de nuevo.',
             duration: 2500,
             color: 'warning'
           });
@@ -240,7 +294,6 @@ export class PuntoVentaPage implements OnInit {
           this.detenerEscaneo();
           return;
         }
-
         this.ngZone.run(() => { this.agregarAlCarritoPorCodigo(codigoLeido); });
       }
     } catch (error) {
@@ -253,7 +306,6 @@ export class PuntoVentaPage implements OnInit {
   detenerEscaneo() {
     BarcodeScanner.showBackground();
     BarcodeScanner.stopScan();
-    // 🟢 AQUÍ TAMBIÉN: Removemos 'qrscanner'
     document.body.classList.remove('qrscanner');
     this.escaneando = false;
   }
@@ -263,13 +315,17 @@ export class PuntoVentaPage implements OnInit {
     if (!productoEncontrado) {
       const alert = await this.alertController.create({
         header: 'No encontrado',
-        message: 'Este producto no está en el inventario.',
+        message: 'Este código no está en el inventario.',
         buttons: ['OK']
       });
       await alert.present();
       return;
     }
-    this.procesarIngresoAlCarrito(productoEncontrado);
+    if (this.esVerduraOPesable(productoEncontrado)) {
+      this.ngZone.run(() => this.abrirCalculadora(productoEncontrado));
+    } else {
+      this.procesarIngresoAlCarrito(productoEncontrado);
+    }
   }
 
   procesarIngresoAlCarrito(producto: Producto) {
@@ -290,14 +346,59 @@ export class PuntoVentaPage implements OnInit {
     this.calcularTotal();
   }
 
+  limpiarCarrito() {
+    this.carrito = [];
+    this.calcularTotal();
+  }
+
   calcularTotal() {
     this.total = this.carrito.reduce((acc, item) => acc + (item.producto.precio * item.cantidad), 0);
   }
-  
+
+  // ========== CIGARROS ==========
+  togglePanelCigarros() {
+    this.panelCigarrosAbierto = !this.panelCigarrosAbierto;
+  }
+
+  cambiarCigarrosSueltos(conf: ConfigCigarro & { cantidadTemp?: number }, delta: number) {
+    const actual = conf.cantidadTemp || 0;
+    conf.cantidadTemp = Math.max(0, actual + delta);
+  }
+
+  agregarCigarrosSueltos(conf: ConfigCigarro & { cantidadTemp?: number }) {
+    if (!conf.cantidadTemp || conf.cantidadTemp <= 0) return;
+    const subtotal = conf.cantidadTemp * conf.precioUnidad;
+    
+    // Buscamos el producto base en el inventario
+    const prodBase = this.inventarioService.productos.find(p => p.id === conf.productoId);
+    
+    // Creamos un producto virtual para el carrito
+    const productoCig: any = {
+      id: `suelto_${conf.productoId}_${Date.now()}`,
+      nombre: `${conf.nombreProducto} (${conf.cantidadTemp} sueltos)`,
+      precio: subtotal,
+      imagen: prodBase?.imagen || '',
+      categoria: 'Cigarrería',
+      stock: null,
+      codigoBarras: ''
+    };
+    
+    this.carrito.push({ producto: productoCig, cantidad: 1 });
+    conf.cantidadTemp = 0;
+    this.calcularTotal();
+    
+    // Acumular en totalCigarros del turno
+    if (this.turnoActual) {
+      this.turnoActual.totalCigarros = (this.turnoActual.totalCigarros || 0) + subtotal;
+    }
+  }
+
+  // ========== MODAL COBRO ==========
   abrirModalCobro() {
     if (this.carrito.length === 0) return;
     this.metodoPago = 'efectivo'; 
-    this.montoRecibido = this.total; 
+    this.montoRecibido = null;
+    this.fotoTransferencia = '';
     this.modalCobroAbierto = true;
   }
 
@@ -315,153 +416,131 @@ export class PuntoVentaPage implements OnInit {
   }
 
   async ejecutarVenta() {
-  // 1. VALIDACIONES
-  if (this.metodoPago === 'efectivo' && (this.montoRecibido || 0) < this.total) {
-    const toast = await this.toastController.create({
-      message: 'El monto ingresado es menor al total.',
-      duration: 2000,
-      color: 'warning'
-    });
-    await toast.present();
-    return;
-  }
-
-  if (this.metodoPago === 'transferencia' && !this.fotoTransferencia) {
-    const toast = await this.toastController.create({
-      message: 'Debes tomarle una foto al comprobante de transferencia.',
-      duration: 2500,
-      color: 'warning'
-    });
-    await toast.present();
-    return;
-  }
-
-  // 2. INICIO DEL PROCESO
-  const loading = await this.loadingController.create({
-    message: 'Procesando venta y actualizando stock...',
-    spinner: 'circles'
-  });
-  await loading.present();
-
-  try {
-    let urlComprobanteFinal = '';
-    
-    // 3. SUBIR FOTO A FIREBASE (Si es transferencia)
-    if (this.metodoPago === 'transferencia' && this.fotoTransferencia) {
-      // Usamos tu servicio para subir la imagen y obtener la URL para el historial
-      urlComprobanteFinal = await this.inventarioService.subirImagen(
-        this.fotoTransferencia, 
-        `comprobante_${new Date().getTime()}`
-      );
+    if (this.metodoPago === 'efectivo' && (this.montoRecibido || 0) < this.total) {
+      const toast = await this.toastController.create({
+        message: 'El monto ingresado es menor al total.',
+        duration: 2000,
+        color: 'warning'
+      });
+      await toast.present();
+      return;
     }
 
-    const pagoFinal = this.metodoPago === 'efectivo' ? (this.montoRecibido || this.total) : this.total;
-    const vueltoFinal = this.metodoPago === 'efectivo' ? this.vuelto : 0;
-
-    // Descontar stock en Firebase
-    await this.inventarioService.procesarDescuentoStock(this.carrito);
-
-    // 4. CREAR EL OBJETO DE LA VENTA
-    const nuevaVenta = {
-      fecha: new Date().toISOString(),
-      items: this.carrito.map(item => ({ nombre: item.producto.nombre, cantidad: item.cantidad, precio: item.producto.precio })),
-      total: this.total,
-      metodoPago: this.metodoPago,
-      pagoCon: pagoFinal,
-      vuelto: vueltoFinal,
-      comprobante: urlComprobanteFinal // Guardamos la URL de la foto en la base de datos
-    };
-
-    // 5. ACTUALIZAR LA CAJA LOGICA (Memoria del teléfono)
-    this.turnoActual.ventas.push(nuevaVenta);
-    this.turnoActual.totalGeneral += this.total;
-    
-    if (this.metodoPago === 'efectivo') {
-      this.turnoActual.totalEfectivo += this.total;
-    } else if (this.metodoPago === 'tarjeta') {
-      this.turnoActual.totalTarjeta += this.total;
-    } else if (this.metodoPago === 'transferencia') {
-      // Inicializa totalTransferencia si no existía en turnos anteriores
-      this.turnoActual.totalTransferencia = (this.turnoActual.totalTransferencia || 0) + this.total;
+    if (this.metodoPago === 'transferencia' && !this.fotoTransferencia) {
+      const toast = await this.toastController.create({
+        message: 'Debes fotografiar el comprobante de transferencia.',
+        duration: 2500,
+        color: 'warning'
+      });
+      await toast.present();
+      return;
     }
 
-    localStorage.setItem('turno_minimarket', JSON.stringify(this.turnoActual));
-    
-    // 6. LA MAGIA: COMPARTIR LA IMAGEN POR WHATSAPP (Solo transferencia)
-    if (this.metodoPago === 'transferencia' && this.fotoTransferencia) {
-      // Separamos la cabecera de la base64 para que el celular la entienda
-      const base64Data = this.fotoTransferencia.split(',')[1];
-      const fileName = `comprobante_${new Date().getTime()}.jpeg`;
+    const loading = await this.loadingController.create({
+      message: 'Procesando venta...',
+      spinner: 'circles'
+    });
+    await loading.present();
+
+    try {
+      let urlComprobanteFinal = '';
       
-      // Guardamos la foto temporalmente en la caché del celular
-      const savedFile = await Filesystem.writeFile({
-        path: fileName,
-        data: base64Data,
-        directory: Directory.Cache
+      if (this.metodoPago === 'transferencia' && this.fotoTransferencia) {
+        urlComprobanteFinal = await this.inventarioService.subirImagen(
+          this.fotoTransferencia, 
+          `comprobante_${new Date().getTime()}`
+        );
+      }
+
+      const pagoFinal = this.metodoPago === 'efectivo' ? (this.montoRecibido || this.total) : this.total;
+      const vueltoFinal = this.metodoPago === 'efectivo' ? this.vuelto : 0;
+
+      await this.inventarioService.procesarDescuentoStock(this.carrito);
+
+      const nuevaVenta = {
+        fecha: new Date().toISOString(),
+        items: this.carrito.map(item => ({ 
+          nombre: item.producto.nombre, 
+          cantidad: item.cantidad, 
+          precio: item.producto.precio,
+          subtotal: item.producto.precio * item.cantidad
+        })),
+        total: this.total,
+        metodoPago: this.metodoPago,
+        pagoCon: pagoFinal,
+        vuelto: vueltoFinal,
+        comprobante: urlComprobanteFinal
+      };
+
+      this.turnoActual.ventas.push(nuevaVenta);
+      this.turnoActual.totalGeneral += this.total;
+      
+      if (this.metodoPago === 'efectivo') {
+        this.turnoActual.totalEfectivo += this.total;
+      } else if (this.metodoPago === 'tarjeta') {
+        this.turnoActual.totalTarjeta += this.total;
+      } else if (this.metodoPago === 'transferencia') {
+        this.turnoActual.totalTransferencia = (this.turnoActual.totalTransferencia || 0) + this.total;
+      }
+
+      localStorage.setItem('turno_minimarket', JSON.stringify(this.turnoActual));
+      
+      if (this.metodoPago === 'transferencia' && this.fotoTransferencia) {
+        const base64Data = this.fotoTransferencia.split(',')[1];
+        const fileName = `comprobante_${new Date().getTime()}.jpeg`;
+        const savedFile = await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Cache
+        });
+
+        const detalleProductos = this.carrito.map(item => {
+          const subtotal = item.producto.precio * item.cantidad; 
+          return `▪ ${item.cantidad} ${item.producto.nombre}: $${subtotal}`;
+        }).join('\n');
+
+        await Share.share({
+          title: 'Comprobante de Pago',
+          text: `✅ Pago por Transferencia Confirmado\nTotal: $${this.total}\n\nDetalle:\n${detalleProductos}\n\n¡Gracias por su compra!`,
+          url: savedFile.uri,
+          dialogTitle: 'Enviar Comprobante'
+        });
+      }
+
+      this.carrito = [];
+      this.calcularTotal();
+      this.fotoTransferencia = '';
+      this.montoRecibido = null;
+      this.metodoPago = 'efectivo';
+      
+      this.cerrarModalCobro();
+      await loading.dismiss();
+
+      const toast = await this.toastController.create({
+        message: '¡Venta completada con éxito! 🎉',
+        duration: 3000,
+        color: 'success',
+        icon: 'checkmark-circle-outline'
       });
+      await toast.present();
 
-      // 🟢 ARMAMOS LA LISTA DETALLADA DEL CARRITO 🟢
-      const detalleProductos = this.carrito.map(item => {
-        const subtotal = item.producto.precio * item.cantidad; 
-        return `▪ ${item.cantidad} ${item.producto.nombre}: $${subtotal}`;
-      }).join('\n');
-
-      const mensajeVenta = `✅ Pago por Transferencia Confirmado
-Total: $${this.total}
-
-Detalle de la compra:
-${detalleProductos}
-
-¡Gracias por su compra!`;
-
-      // Abrimos el menú nativo para enviar la imagen real por WhatsApp
-      await Share.share({
-        title: 'Comprobante de Pago',
-        text: mensajeVenta, // 🟢 AQUÍ MANDAMOS EL MENSAJE DETALLADO 🟢
-        url: savedFile.uri, 
-        dialogTitle: 'Enviar Comprobante'
+    } catch (error) {
+      await loading.dismiss();
+      console.error('Error procesando venta:', error);
+      const alert = await this.alertController.create({
+        header: 'Error',
+        message: 'Hubo un problema al procesar la venta.',
+        buttons: ['OK']
       });
+      await alert.present();
     }
-
-    // 7. LIMPIEZA Y CIERRE FINAL
-    this.carrito = []; 
-    this.calcularTotal();
-    this.fotoTransferencia = ''; // Limpiamos la cámara
-    this.montoRecibido = null; // Limpiamos el input de efectivo
-    this.metodoPago = 'efectivo'; // Volvemos a por defecto
-    
-    this.cerrarModalCobro(); // Ahora cerramos el modal, todo salió bien
-    await loading.dismiss();
-
-    const toast = await this.toastController.create({
-      message: '¡Venta completada con éxito!',
-      duration: 3000,
-      color: 'success',
-      icon: 'checkmark-circle-outline'
-    });
-    await toast.present();
-
-  } catch (error) {
-    await loading.dismiss();
-    console.error('Error procesando venta:', error);
-    const alert = await this.alertController.create({
-      header: 'Error',
-      message: 'Hubo un problema al procesar la venta.',
-      buttons: ['OK']
-    });
-    await alert.present();
   }
-}
 
   ionViewWillLeave() {
     if (this.escaneando) this.detenerEscaneo();
   }
 
-  mostrarCalculadora: boolean = false;
-  productoPesable: any = null;
-  modoCalculadora: 'peso' | 'monto' = 'peso';
-  inputCalculo: string = '';
-
+  // ========== CALCULADORA DE PESO ==========
   abrirCalculadora(producto: any) {
     this.productoPesable = producto;
     this.inputCalculo = '';
@@ -472,9 +551,11 @@ ${detalleProductos}
   cerrarCalculadora() {
     this.mostrarCalculadora = false;
     this.productoPesable = null;
+    this.textoBusqueda = '';
+    this.productosFiltrados = [];
   }
 
-  teclear(valor: string) {
+  teclar(valor: string) {
     if (valor === '.' && this.inputCalculo.includes('.')) return;
     if (valor === '.' && this.inputCalculo === '') {
       this.inputCalculo = '0.';
@@ -490,7 +571,9 @@ ${detalleProductos}
 
   confirmarCalculo() {
     if (!this.inputCalculo || parseFloat(this.inputCalculo) <= 0) return;
-    let cantidadFinal = this.modoCalculadora === 'peso' ? parseFloat(this.inputCalculo) : this.calcularPesoDesdeMonto();
+    let cantidadFinal = this.modoCalculadora === 'peso' 
+      ? parseFloat(this.inputCalculo) 
+      : this.calcularPesoDesdeMonto();
     this.ngZone.run(() => {
       this.agregarAlCarritoConFraccion(this.productoPesable, cantidadFinal);
       this.cerrarCalculadora();
@@ -508,20 +591,20 @@ ${detalleProductos}
   }
 
   async tomarFotoComprobante() {
-  try {
-    const foto = await Camera.getPhoto({
-      quality: 60,
-      width: 800,
-      allowEditing: false,
-      resultType: CameraResultType.DataUrl, // La traemos en base64 para subirla a Firebase fácil
-      source: CameraSource.Camera,
-      direction: CameraDirection.Rear
-    });
-    this.ngZone.run(() => {
-      this.fotoTransferencia = foto.dataUrl || '';
-    });
-  } catch (error) {
-    console.error('Error al tomar foto', error);
+    try {
+      const foto = await Camera.getPhoto({
+        quality: 60,
+        width: 800,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera,
+        direction: CameraDirection.Rear
+      });
+      this.ngZone.run(() => {
+        this.fotoTransferencia = foto.dataUrl || '';
+      });
+    } catch (error) {
+      console.error('Error al tomar foto', error);
+    }
   }
-}
 }

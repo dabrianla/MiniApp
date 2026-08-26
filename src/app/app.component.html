@@ -27,7 +27,28 @@
               </ion-item>
             </ion-menu-toggle>
           }
-          
+
+          <!-- Sección de administración (solo visible para admins) -->
+          <div *ngIf="authService.userData">
+            <div class="seccion-admin-divider">
+              <span>Administración</span>
+            </div>
+            @for (p of adminPages; track p) {
+              <ion-menu-toggle auto-hide="false">
+                <ion-item routerDirection="root" [routerLink]="[p.url]" lines="none" detail="false" routerLinkActive="selected">
+                  <ion-icon aria-hidden="true" slot="start" [ios]="p.icon + '-outline'" [md]="p.icon + '-sharp'" color="secondary"></ion-icon>
+                  <ion-label>{{ p.title }}</ion-label>
+                  
+                  <ion-badge 
+                    color="danger" 
+                    slot="end"
+                    *ngIf="(inventarioService.alertasNoLeidas$ | async) as alertas">
+                    {{ alertas > 0 ? alertas : '' }}
+                  </ion-badge>
+                </ion-item>
+              </ion-menu-toggle>
+            }
+          </div>
 
           <ion-menu-toggle auto-hide="false" *ngIf="!authService.userData">
             <ion-item routerDirection="root" routerLink="/login" lines="none" detail="false" routerLinkActive="selected">

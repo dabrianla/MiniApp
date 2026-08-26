@@ -21,25 +21,30 @@
     </div>
   </ion-toolbar>
 
-  <ion-toolbar color="dark">
-    <div style="display: flex; gap: 10px; padding: 0 15px; margin-bottom: 10px; overflow-x: auto;">
-      <ion-select label="Categoría" label-placement="floating" interface="popover" [(ngModel)]="filtroCategoria" (ionChange)="cambiarFiltroCategoria($event)" style="min-width: 120px; background: #333; border-radius: 8px;">
-        <ion-select-option value="Todas">Todas</ion-select-option>
-        <ion-select-option *ngFor="let cat of categoriasUnicas" [value]="cat">{{ cat }}</ion-select-option>
-      </ion-select>
-
-      <div (click)="abrirFiltroMarcas()" style="min-width: 120px; background: #333; border-radius: 8px; padding: 6px 12px; display: flex; flex-direction: column; justify-content: center; position: relative; cursor: pointer;">
-        <span style="font-size: 11px; color: #999;">Marca</span>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
-          <span style="color: white; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px;">{{ filtroMarca }}</span>
-          <ion-icon name="caret-down-outline" style="color: #999; font-size: 12px;"></ion-icon>
-        </div>
+  <ion-toolbar color="dark" class="filtros-header">
+    <div class="fila-filtros">
+      <span class="label-filtro">CATEGORÍA</span>
+      <div class="pill" [class.activo]="filtroCategoria === 'Todas'" (click)="seleccionarCategoria('Todas')">Todas</div>
+      <div class="pill" *ngFor="let cat of categoriasUnicas" [class.activo]="filtroCategoria === cat" (click)="seleccionarCategoria(cat)">
+        {{ cat }}
       </div>
+    </div>
 
-      <ion-select label="Proveedor" label-placement="floating" interface="popover" [(ngModel)]="filtroDistribuidor" (ionChange)="cambiarFiltroDistribuidor($event)" style="min-width: 120px; background: #333; border-radius: 8px;">
-        <ion-select-option value="Todos">Todos</ion-select-option>
-        <ion-select-option *ngFor="let dist of distribuidoresUnicos" [value]="dist">{{ dist }}</ion-select-option>
-      </ion-select>
+    <div class="fila-filtros">
+      <span class="label-filtro">MARCA</span>
+      <div class="pill" [class.activo]="filtroMarca === 'Todas'" (click)="seleccionarMarca('Todas')">Todas</div>
+      <div class="pill" *ngFor="let marca of marcasVisibles" [class.activo]="filtroMarca === marca" (click)="seleccionarMarca(marca)">
+        {{ marca }}
+      </div>
+      <div class="pill" *ngIf="marcasUnicas.length > 8" (click)="abrirFiltroMarcas()">...</div>
+    </div>
+
+    <div class="fila-filtros">
+      <span class="label-filtro">PROVEEDOR</span>
+      <div class="pill" [class.activo]="filtroDistribuidor === 'Todos'" (click)="seleccionarDistribuidor('Todos')">Todos</div>
+      <div class="pill" *ngFor="let dist of distribuidoresUnicos" [class.activo]="filtroDistribuidor === dist" (click)="seleccionarDistribuidor(dist)">
+        {{ dist }}
+      </div>
     </div>
   </ion-toolbar>
 </ion-header>
@@ -352,5 +357,3 @@
         </ion-footer>
       </ng-template>
     </ion-modal>
-
-    

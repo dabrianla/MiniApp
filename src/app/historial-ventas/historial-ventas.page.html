@@ -1,98 +1,164 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar color="dark">
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/" color="secondary"></ion-back-button>
+      <ion-back-button defaultHref="/"></ion-back-button>
     </ion-buttons>
-    <ion-title color="secondary">Cierre de Caja</ion-title>
+    <ion-title>Historial de Ventas</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content color="dark" class="ion-padding">
-  
-  <ion-item color="dark" lines="none" style="border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; margin-bottom: 20px;">
-    <ion-icon name="calendar-outline" slot="start" color="secondary"></ion-icon>
-    <ion-label style="color: white; font-weight: bold;">Ver turnos del día:</ion-label>
-    <ion-datetime-button datetime="calendarioVentas" color="light"></ion-datetime-button>
-  </ion-item>
-
-  <ion-modal [keepContentsMounted]="true">
-    <ng-template>
-      <ion-datetime id="calendarioVentas" presentation="date" [value]="fechaSeleccionada" (ionChange)="cambiarFecha($event)"></ion-datetime>
-    </ng-template>
-  </ion-modal>
-
-  <ion-card style="background: rgba(45, 211, 111, 0.1); border: 2px solid #2dd36f; border-radius: 15px; margin: 0 0 25px 0;">
-    <ion-card-header class="ion-text-center">
-      <ion-card-title style="color: #2dd36f; font-weight: bold; font-size: 1.4rem;">
-        Resumen de Caja
-      </ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-        <span style="color: white; font-size: 1.1rem;"><ion-icon name="cash-outline"></ion-icon> Total Efectivo:</span>
-        <strong style="color: white; font-size: 1.1rem;">${{ totalEfectivo }}</strong>
-      </div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-        <span style="color: white; font-size: 1.1rem;"><ion-icon name="card-outline"></ion-icon> Total Tarjeta:</span>
-        <strong style="color: white; font-size: 1.1rem;">${{ totalTarjeta }}</strong>
-      </div>
-      <div style="border-bottom: 1px solid rgba(255,255,255,0.3); margin: 15px 0;"></div>
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="color: var(--ion-color-secondary); font-size: 1.2rem; font-weight: bold;">TOTAL INGRESOS:</span>
-        <strong style="color: var(--ion-color-secondary); font-size: 1.8rem; font-weight: 900;">${{ totalCaja }}</strong>
-      </div>
-    </ion-card-content>
-  </ion-card>
-
-  <h2 style="color: white; font-weight: bold; margin-bottom: 15px; border-left: 4px solid var(--ion-color-secondary); padding-left: 10px;">
-    Detalle de Turnos ({{ turnosDelDia.length }})
-  </h2>
-
-  <div *ngIf="turnosDelDia.length === 0" class="ion-text-center" style="margin-top: 40px; opacity: 0.5;">
-    <ion-icon name="receipt-outline" style="font-size: 5rem; color: white;"></ion-icon>
-    <p style="color: white; font-size: 1.2rem;">No hay turnos registrados en esta fecha.</p>
+<ion-content color="dark">
+  <div class="date-picker-container">
+    <ion-datetime-button datetime="datetime"></ion-datetime-button>
+    <ion-modal [keepContentsMounted]="true">
+      <ng-template>
+        <ion-datetime id="datetime" presentation="date" (ionChange)="cambiarFecha($event)" [value]="fechaSeleccionada"></ion-datetime>
+      </ng-template>
+    </ion-modal>
   </div>
 
-  <ion-accordion-group *ngIf="turnosDelDia.length > 0">
-    <ion-accordion *ngFor="let turno of turnosDelDia" style="background: var(--ion-color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 10px;">
-      
-      <ion-item slot="header" color="dark">
-        <ion-icon name="person-circle-outline" slot="start" color="secondary" style="font-size: 2rem;"></ion-icon>
-        <ion-label>
-          <h2 style="color: white; font-weight: bold; font-size: 1.2rem;">{{ turno.cajero | titlecase }}</h2>
-          <p style="color: var(--ion-color-secondary); font-weight: bold;">
-            En Estuche: ${{ turno.fondoCaja + turno.totalEfectivo }}
-          </p>
-        </ion-label>
-        <ion-badge color="medium" slot="end" style="padding: 5px 10px;">
-          {{ turno.ventas.length }} Tickets
-        </ion-badge>
-      </ion-item>
-
-      <div class="ion-padding" slot="content" style="background: rgba(0,0,0,0.2);">
-        
-        <div style="margin-bottom: 15px;">
-          <ion-note color="medium" style="display: block;"><ion-icon name="time-outline"></ion-icon> Apertura: {{ turno.fechaInicio | date:'shortTime' }}</ion-note>
-          <ion-note color="medium" style="display: block;" *ngIf="turno.fechaFin"><ion-icon name="time-outline"></ion-icon> Cierre: {{ turno.fechaFin | date:'shortTime' }}</ion-note>
-        </div>
-
-        <div style="background: rgba(45, 211, 111, 0.1); border: 1px solid #2dd36f; border-radius: 8px; padding: 10px; margin-bottom: 20px;">
-          <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-            <span style="color: white;">Fondo Inicial:</span>
-            <span style="color: white;">${{ turno.fondoCaja }}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-            <span style="color: white;">Ventas Efectivo:</span>
-            <span style="color: white;">${{ turno.totalEfectivo }}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-            <span style="color: #3880ff;">Ventas Tarjeta:</span>
-            <span style="color: #3880ff;">${{ turno.totalTarjeta }}</span>
-          </div>
-        </div>
-
+  <div class="summary-cards-container">
+    <div class="summary-card card-total">
+      <ion-icon name="wallet-outline"></ion-icon>
+      <div class="card-details">
+        <span class="card-label">Total General</span>
+        <span class="card-value">{{ totalCaja | currency }}</span>
       </div>
-    </ion-accordion>
-  </ion-accordion-group>
+    </div>
+    
+    <div class="summary-card card-efectivo">
+      <ion-icon name="cash-outline"></ion-icon>
+      <div class="card-details">
+        <span class="card-label">Efectivo</span>
+        <span class="card-value">{{ totalEfectivo | currency }}</span>
+      </div>
+    </div>
+    
+    <div class="summary-card card-tarjeta">
+      <ion-icon name="card-outline"></ion-icon>
+      <div class="card-details">
+        <span class="card-label">Tarjeta</span>
+        <span class="card-value">{{ totalTarjeta | currency }}</span>
+      </div>
+    </div>
+    
+    <div class="summary-card card-transferencia">
+      <ion-icon name="phone-portrait-outline"></ion-icon>
+      <div class="card-details">
+        <span class="card-label">Transferencia</span>
+        <span class="card-value">{{ totalTransferencia | currency }}</span>
+      </div>
+    </div>
+    
+    <div class="summary-card card-cigarros" *ngIf="totalCigarros > 0">
+      <ion-icon name="storefront-outline"></ion-icon>
+      <div class="card-details">
+        <span class="card-label">Cigarros</span>
+        <span class="card-value">{{ totalCigarros | currency }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="turnos-container" *ngIf="turnosDelDia.length > 0; else noData">
+    <ion-accordion-group>
+      <ion-accordion *ngFor="let turno of turnosDelDia" [value]="turno.id">
+        <ion-item slot="header" color="dark" class="turno-header">
+          <ion-icon name="person-circle-outline" slot="start" color="primary"></ion-icon>
+          <ion-label>
+            <h2>{{ turno.cajero }}</h2>
+            <p><ion-icon name="time-outline"></ion-icon> {{ turno.fechaInicio | date:'HH:mm' }} - {{ turno.fechaFin ? (turno.fechaFin | date:'HH:mm') : 'Activo' }}</p>
+          </ion-label>
+          <div slot="end" class="turno-summary">
+            <ion-badge color="secondary">{{ turno.ventas?.length || 0 }} ventas</ion-badge>
+            <span class="turno-total">{{ turno.totalGeneral | currency }}</span>
+          </div>
+        </ion-item>
+        <div class="ion-padding" slot="content" class="turno-content">
+          <ion-list class="ventas-list">
+            <ion-item *ngFor="let venta of turno.ventas" (click)="abrirDetalleVenta(venta)" button detail="false" color="dark" class="venta-item">
+              <ion-label>
+                <h3>{{ venta.fecha | date:'HH:mm' }}</h3>
+                <p>{{ venta.items.length }} items</p>
+              </ion-label>
+              <div slot="end" class="venta-end">
+                <ion-icon [name]="venta.metodoPago === 'efectivo' ? 'cash-outline' : (venta.metodoPago === 'tarjeta' ? 'card-outline' : 'phone-portrait-outline')" 
+                          [color]="venta.metodoPago === 'efectivo' ? 'success' : (venta.metodoPago === 'tarjeta' ? 'primary' : 'tertiary')"></ion-icon>
+                <span class="venta-total">{{ venta.total | currency }}</span>
+              </div>
+            </ion-item>
+            <div *ngIf="!turno.ventas || turno.ventas.length === 0" class="no-ventas">
+              <p>No hay ventas en este turno.</p>
+            </div>
+          </ion-list>
+        </div>
+      </ion-accordion>
+    </ion-accordion-group>
+  </div>
+  
+  <ng-template #noData>
+    <div class="no-data-message">
+      <ion-icon name="receipt-outline"></ion-icon>
+      <p>No hay turnos registrados para esta fecha.</p>
+    </div>
+  </ng-template>
+
+  <!-- Modal Detalle Venta -->
+  <ion-modal [isOpen]="modalVentaAbierto" (didDismiss)="cerrarDetalleVenta()" cssClass="venta-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="dark">
+          <ion-title>Detalle de Venta</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="cerrarDetalleVenta()">
+              <ion-icon name="close-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content color="dark" class="ion-padding modal-content" *ngIf="ventaSeleccionada">
+        
+        <div class="venta-header-info">
+          <h2>{{ ventaSeleccionada.total | currency }}</h2>
+          <p><ion-icon name="time-outline"></ion-icon> {{ ventaSeleccionada.fecha | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+
+        <div class="items-list">
+          <h3>Productos ({{ ventaSeleccionada.items.length }})</h3>
+          <div class="item-row" *ngFor="let item of ventaSeleccionada.items">
+            <div class="item-details">
+              <span class="item-name">{{ item.nombre }}</span>
+              <span class="item-qty">{{ item.cantidad }} x {{ item.precio | currency }}</span>
+            </div>
+            <div class="item-subtotal">{{ calcularSubtotal(item) | currency }}</div>
+          </div>
+        </div>
+
+        <div class="payment-info">
+          <h3>Información de Pago</h3>
+          <div class="info-row">
+            <span>Método</span>
+            <span class="method-badge">
+              <ion-icon [name]="ventaSeleccionada.metodoPago === 'efectivo' ? 'cash-outline' : (ventaSeleccionada.metodoPago === 'tarjeta' ? 'card-outline' : 'phone-portrait-outline')"></ion-icon>
+              {{ ventaSeleccionada.metodoPago | uppercase }}
+            </span>
+          </div>
+          <div class="info-row" *ngIf="ventaSeleccionada.metodoPago === 'efectivo'">
+            <span>Pago con</span>
+            <span>{{ ventaSeleccionada.pagoCon | currency }}</span>
+          </div>
+          <div class="info-row" *ngIf="ventaSeleccionada.metodoPago === 'efectivo' && ventaSeleccionada.vuelto !== undefined">
+            <span>Vuelto</span>
+            <span class="vuelto-text">{{ ventaSeleccionada.vuelto | currency }}</span>
+          </div>
+        </div>
+
+        <div class="comprobante-container" *ngIf="ventaSeleccionada.comprobante">
+          <h3>Comprobante</h3>
+          <img [src]="ventaSeleccionada.comprobante" alt="Comprobante de pago" class="comprobante-img" />
+        </div>
+
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 
 </ion-content>

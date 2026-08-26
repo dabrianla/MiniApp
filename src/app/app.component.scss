@@ -133,3 +133,27 @@ ion-item.selected {
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
+
+/* Divisor de sección admin */
+.seccion-admin-divider {
+  padding: 18px 16px 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  span {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ion-color-secondary);
+    opacity: 0.8;
+  }
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 206, 0, 0.2);
+  }
+}

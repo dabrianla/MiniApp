@@ -1,0 +1,187 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="dark">
+    <ion-title>Panel de Administración</ion-title>
+  </ion-toolbar>
+  <ion-toolbar color="dark">
+    <ion-segment [(ngModel)]="seccionActual" scrollable="true">
+      <ion-segment-button value="avisos">Avisos</ion-segment-button>
+      <ion-segment-button value="cigarros">Cigarros</ion-segment-button>
+      <ion-segment-button value="alertas">Alertas</ion-segment-button>
+      <ion-segment-button value="estadisticas">Estadísticas</ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- TAB 1: Avisos -->
+  <div *ngIf="seccionActual === 'avisos'">
+    <div class="section-header">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      Avisos de Vendedores
+    </div>
+    
+    <ion-segment [(ngModel)]="filtroAlertas" (ionChange)="aplicarFiltroAlertas()">
+      <ion-segment-button value="pendientes">Pendientes</ion-segment-button>
+      <ion-segment-button value="resueltas">Resueltas</ion-segment-button>
+    </ion-segment>
+    
+    <div *ngIf="alertasFiltradas.length === 0" class="ion-text-center ion-padding">
+      <ion-text color="medium">No hay avisos en esta categoría.</ion-text>
+    </div>
+    
+    <ion-card *ngFor="let alerta of alertasFiltradas" class="alert-card" [ngClass]="alerta.resuelta ? 'resolved' : 'pending'">
+      <ion-card-header>
+        <ion-card-title>{{ alerta.productoNombre }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>{{ alerta.mensaje }}</p>
+        <div class="meta-info">
+          <span>Por: {{ alerta.creadoPor }}</span>
+          <span>{{ alerta.fecha | date:'short' }}</span>
+        </div>
+        <div *ngIf="alerta.resuelta" class="resolution-info">
+          Resuelto el: {{ alerta.fechaResolucion | date:'short' }}
+        </div>
+        <ion-button *ngIf="!alerta.resuelta" expand="block" class="resolve-button ion-margin-top" (click)="marcarResuelto(alerta)">
+          Marcar como Resuelto
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+  </div>
+  
+  <!-- TAB 2: Cigarros -->
+  <div *ngIf="seccionActual === 'cigarros'">
+    <div class="section-header">
+      <ion-icon name="construct-outline"></ion-icon>
+      Configuración de Cigarros
+    </div>
+    <div class="ion-padding-horizontal">
+      <ion-text color="medium"><small>Configura qué cigarros se venden sueltos y su precio por unidad.</small></ion-text>
+    </div>
+    
+    <ion-card *ngFor="let config of cigarrosConfig">
+      <ion-item lines="none" class="transparent-item">
+        <ion-label>
+          <h2>{{ config.nombreProducto }}</h2>
+        </ion-label>
+        <ion-toggle [(ngModel)]="config.activo" slot="end" color="primary"></ion-toggle>
+      </ion-item>
+      
+      <ion-card-content *ngIf="config.activo">
+        <ion-item class="input-item ion-margin-bottom">
+          <ion-label position="stacked">Precio por Unidad</ion-label>
+          <ion-input type="number" [(ngModel)]="config.precioUnidad"></ion-input>
+        </ion-item>
+        <ion-item class="input-item">
+          <ion-label position="stacked">Cigarros por Cajetilla</ion-label>
+          <ion-input type="number" [(ngModel)]="config.cigarrosPorCajetilla"></ion-input>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+    
+    <ion-button expand="block" class="save-button" (click)="guardarConfigCigarros()">
+      <ion-icon name="save-outline" slot="start"></ion-icon>
+      Guardar Configuración
+    </ion-button>
+  </div>
+  
+  <!-- TAB 3: Alertas -->
+  <div *ngIf="seccionActual === 'alertas'">
+    <div class="section-header">
+      <ion-icon name="settings-outline"></ion-icon>
+      Configuración de Alertas
+    </div>
+    
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Tipos de Alertas Activas</ion-card-title>
+      </ion-card-header>
+      <ion-card-content *ngIf="configNotif.alertasActivas">
+        <ion-item lines="none" class="transparent-item" *ngFor="let tipo of getTiposAlertas()">
+          <ion-label>{{ tipo | titlecase }}</ion-label>
+          <ion-toggle [(ngModel)]="configNotif.alertasActivas[tipo]" slot="end" color="primary"></ion-toggle>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+    
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Parámetros Generales</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-item class="input-item ion-margin-bottom">
+          <ion-label>Días para Vencimiento</ion-label>
+          <ion-select [(ngModel)]="configNotif.diasAlertaVencimiento" interface="popover">
+            <ion-select-option [value]="3">3 días</ion-select-option>
+            <ion-select-option [value]="7">7 días</ion-select-option>
+            <ion-select-option [value]="15">15 días</ion-select-option>
+            <ion-select-option [value]="30">30 días</ion-select-option>
+          </ion-select>
+        </ion-item>
+        
+        <ion-item class="input-item ion-margin-bottom">
+          <ion-label position="stacked">Stock Mínimo por Defecto</ion-label>
+          <ion-input type="number" [(ngModel)]="configNotif.stockMinimoPorDefecto"></ion-input>
+        </ion-item>
+        
+        <ion-item class="input-item">
+          <ion-label>Límite de Mensajes</ion-label>
+          <ion-select [(ngModel)]="configNotif.limiteMensajes" interface="popover">
+            <ion-select-option [value]="25">25</ion-select-option>
+            <ion-select-option [value]="50">50</ion-select-option>
+            <ion-select-option [value]="100">100</ion-select-option>
+            <ion-select-option [value]="200">200</ion-select-option>
+          </ion-select>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+    
+    <ion-button expand="block" class="save-button" (click)="guardarConfigNotificaciones()">
+      <ion-icon name="save-outline" slot="start"></ion-icon>
+      Guardar Configuración
+    </ion-button>
+  </div>
+  
+  <!-- TAB 4: Estadísticas -->
+  <div *ngIf="seccionActual === 'estadisticas'">
+    <div class="section-header">
+      <ion-icon name="stats-chart-outline"></ion-icon>
+      Estadísticas Rápidas
+    </div>
+    
+    <ion-grid>
+      <ion-row>
+        <ion-col size="6">
+          <ion-card class="stats-card">
+            <div class="stats-value" style="color: #1eb4e6;">{{ totalProductos }}</div>
+            <div class="stats-label">Total Productos</div>
+          </ion-card>
+        </ion-col>
+        <ion-col size="6">
+          <ion-card class="stats-card">
+            <div class="stats-value" style="color: #ff4961;">{{ productosStockBajo }}</div>
+            <div class="stats-label">Stock Bajo</div>
+          </ion-card>
+        </ion-col>
+        <ion-col size="6">
+          <ion-card class="stats-card">
+            <div class="stats-value" style="color: #ffce00;">{{ productosProxVencer }}</div>
+            <div class="stats-label">Próximos a Vencer</div>
+          </ion-card>
+        </ion-col>
+        <ion-col size="6">
+          <ion-card class="stats-card">
+            <div class="stats-value" style="color: #ffce00;">{{ alertasPendientes }}</div>
+            <div class="stats-label">Alertas Pendientes</div>
+          </ion-card>
+        </ion-col>
+        <ion-col size="12">
+          <ion-card class="stats-card">
+            <div class="stats-value" style="color: #2dd36f;">{{ totalTurnos }}</div>
+            <div class="stats-label">Turnos Registrados</div>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</ion-content>

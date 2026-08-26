@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc, collectionData, doc, updateDoc, deleteDoc, setDoc } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, collectionData, doc, updateDoc, deleteDoc, setDoc, query, where, orderBy } from '@angular/fire/firestore';
 import { BehaviorSubject } from 'rxjs';
 import { Storage, ref, uploadString, getDownloadURL, deleteObject } from '@angular/fire/storage';
 
@@ -8,6 +8,11 @@ export interface Lote {
   cantidad: number;
   fechaVencimiento: any;
   fechaIngreso: string;
+  // Nuevos campos para trazabilidad
+  precioCosto?: number;
+  numeroLote?: string;
+  proveedor?: string;
+  notas?: string;
 }
 
 export interface Producto {
@@ -38,6 +43,10 @@ export interface EventoHistorial {
 export interface ConfigNotificaciones {
   limiteMensajes: number;
   colores: Record<string, { fondo: string, borde: string }>;
+  // Nuevas opciones de configuración
+  diasAlertaVencimiento?: number;       // Cuántos días antes avisar (default: 7)
+  alertasActivas?: Record<string, boolean>; // Toggle por tipo
+  stockMinimoPorDefecto?: number;       // Para nuevos productos sin mínimo
 }
 
 export interface ItemVenta {
@@ -54,18 +63,46 @@ export interface Venta {
   metodoPago: string;
   pagoCon: number;
   vuelto: number;
+  comprobante?: string;
 }
 
 export interface Turno {
   id?: string;
   cajero: string;
-  fondoCaja: number; // 🟢 NUEVO: El dinero con el que inicia el turno
+  fondoCaja: number;
   fechaInicio: string;
   fechaFin?: string;
   ventas: Venta[];
   totalEfectivo: number;
   totalTarjeta: number;
+  totalTransferencia?: number; // Nuevo
+  totalCigarros?: number;      // Nuevo — ventas de cigarros identificadas
   totalGeneral: number;
+}
+
+// Alerta creada por vendedores para productos sin stock digital (ej: verduras)
+export interface AlertaVendedor {
+  id?: string;
+  mensaje: string;
+  productoNombre: string;
+  productoId?: string;
+  creadoPor: string;    // nombre del vendedor
+  fecha: string;
+  resuelta: boolean;
+  fechaResolucion?: string;
+}
+
+// Configuración de cigarros sueltos
+export interface ConfigCigarro {
+  productoId: string;
+  nombreProducto: string;
+  precioUnidad: number;   // Precio por cigarro suelto
+  cigarrosPorCajetilla: number; // Cuántos cigarros tiene la cajetilla
+  activo: boolean;
+}
+
+export interface ConfigCigarros {
+  cigarros: ConfigCigarro[];
 }
 
 export const COLORES_POR_DEFECTO = {
@@ -77,6 +114,17 @@ export const COLORES_POR_DEFECTO = {
   'nuevo': { fondo: '#e8f5e9', borde: '#4caf50' },
   'eliminado': { fondo: '#f5f5f5', borde: '#9e9e9e' },
   'sistema': { fondo: '#eeeeee', borde: '#757575' }
+};
+
+export const ALERTAS_ACTIVAS_POR_DEFECTO: Record<string, boolean> = {
+  'vencimiento': true,
+  'oferta': true,
+  'oferta-fin': true,
+  'stock': true,
+  'precio': true,
+  'nuevo': true,
+  'eliminado': true,
+  'sistema': true
 };
 
 @Injectable({
@@ -96,12 +144,21 @@ export class InventarioService {
 
   public configNotificacionesSubject = new BehaviorSubject<ConfigNotificaciones>({
     limiteMensajes: 100,
-    colores: COLORES_POR_DEFECTO
+    colores: COLORES_POR_DEFECTO,
+    diasAlertaVencimiento: 7,
+    alertasActivas: ALERTAS_ACTIVAS_POR_DEFECTO,
+    stockMinimoPorDefecto: 5
   });
   public configNotificaciones$ = this.configNotificacionesSubject.asObservable();
 
   private turnosSubject = new BehaviorSubject<Turno[]>([]);
   public turnos$ = this.turnosSubject.asObservable();
+
+  private alertasVendedorSubject = new BehaviorSubject<AlertaVendedor[]>([]);
+  public alertasVendedor$ = this.alertasVendedorSubject.asObservable();
+
+  private alertasNoLeidasSubject = new BehaviorSubject<number>(0);
+  public alertasNoLeidas$ = this.alertasNoLeidasSubject.asObservable();
 
   obtenerTurnos() {
     const turnosRef = collection(this.firestore, 'historial_turnos');
@@ -111,10 +168,21 @@ export class InventarioService {
     });
   }
 
+  obtenerAlertasVendedor() {
+    const alertasRef = collection(this.firestore, 'alertas_stock');
+    collectionData(alertasRef, { idField: 'id' }).subscribe((res: any[]) => {
+      res.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+      this.alertasVendedorSubject.next(res as AlertaVendedor[]);
+      const pendientes = res.filter(a => !a.resuelta).length;
+      this.alertasNoLeidasSubject.next(pendientes);
+    });
+  }
+
   constructor(private firestore: Firestore, private storage: Storage) {
     this.obtenerProductos();
     this.obtenerHistorial(); 
     this.obtenerTurnos();
+    this.obtenerAlertasVendedor();
   }
 
   async subirImagen(base64String: string, nombreArchivo: string): Promise<string> {
@@ -169,11 +237,15 @@ export class InventarioService {
   }
 
   async registrarEventoHistorial(evento: EventoHistorial) {
+    // Verificar si este tipo de alerta está activo
+    const config = this.configNotificacionesSubject.value;
+    const alertasActivas = config.alertasActivas || ALERTAS_ACTIVAS_POR_DEFECTO;
+    if (alertasActivas[evento.tipo] === false) return; // Salir si está desactivado
+
     const historialRef = collection(this.firestore, 'historial_notificaciones');
     await addDoc(historialRef, evento);
 
-    const configActual = this.configNotificacionesSubject.value;
-    const limite = configActual.limiteMensajes || 100;
+    const limite = config.limiteMensajes || 100;
     const historialActual = this.historialSubject.value;
 
     if (historialActual.length >= limite) {
@@ -186,6 +258,19 @@ export class InventarioService {
         }
       }
     }
+  }
+
+  async registrarAlertaVendedor(alerta: Omit<AlertaVendedor, 'id'>) {
+    const alertasRef = collection(this.firestore, 'alertas_stock');
+    return addDoc(alertasRef, alerta);
+  }
+
+  async resolverAlerta(id: string) {
+    const alertaRef = doc(this.firestore, `alertas_stock/${id}`);
+    return updateDoc(alertaRef, {
+      resuelta: true,
+      fechaResolucion: new Date().toISOString()
+    });
   }
 
   async agregarProducto(producto: any) {
@@ -269,7 +354,6 @@ export class InventarioService {
     return deleteDoc(productoDocRef);
   }
 
-  // 1. Solo descuenta stock en la BD (Optimizado)
   async procesarDescuentoStock(carrito: any[]) {
     try {
       for (const item of carrito) {
@@ -282,7 +366,6 @@ export class InventarioService {
           }
 
           let lotesActualizados = item.producto.lotes ? [...item.producto.lotes] : [];
-          // ... (mantén aquí tu misma lógica de ordenar y restar lotes que ya tenías)
           for (let i = 0; i < lotesActualizados.length; i++) {
             if (cantidadAVender <= 0) break; 
             if (lotesActualizados[i].cantidad <= cantidadAVender) {
@@ -303,19 +386,19 @@ export class InventarioService {
     } catch (error) { throw error; }
   }
 
-  // 2. Guarda TODO el turno de una sola vez (Ahorra Firebase)
   async guardarTurnoCaja(turnoData: any) {
     const turnosRef = collection(this.firestore, 'historial_turnos');
     await addDoc(turnosRef, turnoData);
   }
 
-  async registrarIngresoStock(producto: Producto, cantidadIngresa: number, fechaVenc: string = '') {
+  async registrarIngresoStock(producto: Producto, cantidadIngresa: number, fechaVenc: string = '', extras?: { precioCosto?: number; numeroLote?: string; proveedor?: string; notas?: string; }) {
     const productoRef = doc(this.firestore, `productos/${producto.id}`);
     const nuevoLote: Lote = {
       idUnico: Date.now().toString(),
       cantidad: cantidadIngresa,
       fechaVencimiento: fechaVenc || 'Sin vencimiento',
-      fechaIngreso: new Date().toISOString()
+      fechaIngreso: new Date().toISOString(),
+      ...(extras || {})
     };
 
     const stockActual = producto.stock || 0;
@@ -328,15 +411,23 @@ export class InventarioService {
       datosAActualizar.fechaVencimiento = fechaVenc;
     }
 
+    await this.registrarEventoHistorial({
+      tipo: 'stock',
+      mensaje: `Ingreso de stock: +${cantidadIngresa} unidades de "${producto.nombre}". Stock total: ${nuevoStockTotal}.`,
+      fecha: new Date().toISOString(),
+      productoId: producto.id
+    });
+
     return updateDoc(productoRef, datosAActualizar);
   }
 
   async verificarVencimientosDiarios() {
     const historialActual = this.historialSubject.value;
     const hoyIso = new Date().toISOString().split('T')[0]; 
+    const config = this.configNotificacionesSubject.value;
+    const diasAlerta = config.diasAlertaVencimiento ?? 7;
 
     for (const prod of this.productos) {
-      // 🟢 AQUÍ ESTÁ LA SOLUCIÓN: Agregamos la condición de que el stock sea mayor a 0
       if (
         prod.stock !== null && 
         prod.stock !== undefined && 
@@ -349,8 +440,7 @@ export class InventarioService {
         
         const diferenciaDias = Math.ceil((fechaVenc.getTime() - hoyDate.getTime()) / (1000 * 3600 * 24));
 
-        if (diferenciaDias <= 7) {
-          
+        if (diferenciaDias <= diasAlerta) {
           const yaAvisoHoy = historialActual.some(h => 
             h.tipo === 'vencimiento' && 
             h.productoId === prod.id && 
@@ -375,11 +465,19 @@ export class InventarioService {
   }
 
   obtenerConfiguracionNotificaciones() {
-    const configRef = doc(this.firestore, 'configuracion/notificaciones');
     collectionData(collection(this.firestore, 'configuracion'), { idField: 'id' }).subscribe((res: any[]) => {
       const configDB = res.find(c => c.id === 'notificaciones');
       if (configDB) {
-        this.configNotificacionesSubject.next(configDB as ConfigNotificaciones);
+        // Merge con defaults para que nuevos campos siempre tengan valor
+        const merged: ConfigNotificaciones = {
+          limiteMensajes: 100,
+          colores: COLORES_POR_DEFECTO,
+          diasAlertaVencimiento: 7,
+          alertasActivas: ALERTAS_ACTIVAS_POR_DEFECTO,
+          stockMinimoPorDefecto: 5,
+          ...configDB
+        };
+        this.configNotificacionesSubject.next(merged);
       }
     });
   }
@@ -389,4 +487,30 @@ export class InventarioService {
     return setDoc(configRef, config);
   }
 
+  // ===================== CONFIGURACIÓN CIGARROS =====================
+
+  async obtenerConfigCigarros(): Promise<ConfigCigarros> {
+    const configRef = collection(this.firestore, 'configuracion');
+    return new Promise(resolve => {
+      collectionData(configRef, { idField: 'id' }).subscribe((res: any[]) => {
+        const configDB = res.find(c => c.id === 'cigarros');
+        resolve(configDB ? (configDB as ConfigCigarros) : { cigarros: [] });
+      });
+    });
+  }
+
+  async guardarConfigCigarros(config: ConfigCigarros) {
+    const configRef = doc(this.firestore, 'configuracion/cigarros');
+    return setDoc(configRef, config);
+  }
+
+  // Detecta si un producto es un cigarro por palabras clave en el nombre
+  esCigarro(producto: Producto): boolean {
+    const keywords = ['cigarro', 'cigarrillo', 'cajetilla', 'tabaco', 'marlboro', 'kent', 'lucky strike', 'pall mall', 'winston', 'belmont', 'nevada', 'derby'];
+    const nombreLower = (producto.nombre || '').toLowerCase();
+    const marcaLower = (producto.marca || '').toLowerCase();
+    const categoriaLower = (producto.categoria || '').toLowerCase();
+    return categoriaLower === 'cigarrería' || 
+           keywords.some(k => nombreLower.includes(k) || marcaLower.includes(k));
+  }
 }

@@ -1,0 +1,329 @@
+ion-content {
+  --background: #121212;
+}
+
+.date-picker-container {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.summary-cards-container {
+  display: flex;
+  overflow-x: auto;
+  padding: 0 1rem 1rem 1rem;
+  gap: 1rem;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  .summary-card {
+    min-width: 140px;
+    padding: 1rem;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    ion-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .card-details {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .card-label {
+      font-size: 0.8rem;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .card-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    &.card-total {
+      background: rgba(255, 206, 0, 0.15); /* Secondary #ffce00 */
+      color: #ffce00;
+      border-color: rgba(255, 206, 0, 0.3);
+      min-width: 160px;
+      .card-value { font-size: 1.4rem; }
+    }
+    
+    &.card-efectivo {
+      background: rgba(46, 213, 115, 0.15); /* Green */
+      color: #2ed573;
+      border-color: rgba(46, 213, 115, 0.3);
+    }
+    
+    &.card-tarjeta {
+      background: rgba(30, 180, 230, 0.15); /* Primary #1eb4e6 */
+      color: #1eb4e6;
+      border-color: rgba(30, 180, 230, 0.3);
+    }
+    
+    &.card-transferencia {
+      background: rgba(156, 136, 255, 0.15); /* Purple */
+      color: #9c88ff;
+      border-color: rgba(156, 136, 255, 0.3);
+    }
+    
+    &.card-cigarros {
+      background: rgba(255, 127, 80, 0.15); /* Orange */
+      color: #ff7f50;
+      border-color: rgba(255, 127, 80, 0.3);
+    }
+  }
+}
+
+.turnos-container {
+  padding: 0 1rem;
+  
+  ion-accordion-group {
+    background: transparent;
+  }
+  
+  ion-accordion {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    
+    .turno-header {
+      --background: transparent;
+      --padding-start: 1rem;
+      
+      ion-icon {
+        font-size: 2rem;
+      }
+      
+      h2 {
+        font-weight: bold;
+        color: #fff;
+      }
+      
+      p {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      
+      .turno-summary {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.25rem;
+        
+        ion-badge {
+          --background: rgba(255, 206, 0, 0.2);
+          --color: #ffce00;
+        }
+        
+        .turno-total {
+          font-weight: bold;
+          color: #fff;
+        }
+      }
+    }
+    
+    .turno-content {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0;
+      
+      .ventas-list {
+        background: transparent;
+        padding: 0.5rem 0;
+        
+        .venta-item {
+          --background: transparent;
+          --padding-start: 1rem;
+          margin-bottom: 2px;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+          
+          h3 {
+            color: #fff;
+            font-weight: 500;
+          }
+          
+          p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8rem;
+          }
+          
+          .venta-end {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            
+            ion-icon {
+              font-size: 1.2rem;
+            }
+            
+            .venta-total {
+              font-weight: bold;
+              color: #fff;
+            }
+          }
+        }
+      }
+      
+      .no-ventas {
+        padding: 1rem;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.5);
+        font-style: italic;
+      }
+    }
+  }
+}
+
+.no-data-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: rgba(255, 255, 255, 0.4);
+  
+  ion-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Modal Detalle Venta */
+.modal-content {
+  --background: #121212;
+  
+  .venta-header-info {
+    text-align: center;
+    padding: 2rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    h2 {
+      font-size: 2.5rem;
+      color: #ffce00;
+      font-weight: bold;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    p {
+      color: rgba(255, 255, 255, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: 0;
+    }
+  }
+  
+  .items-list {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    h3 {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .item-details {
+        display: flex;
+        flex-direction: column;
+        
+        .item-name {
+          color: #fff;
+          font-weight: 500;
+          margin-bottom: 0.2rem;
+        }
+        
+        .item-qty {
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 0.85rem;
+        }
+      }
+      
+      .item-subtotal {
+        color: #fff;
+        font-weight: bold;
+      }
+    }
+  }
+  
+  .payment-info {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    h3 {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.8rem;
+      color: #fff;
+      
+      .method-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(30, 180, 230, 0.15);
+        color: #1eb4e6;
+        padding: 0.3rem 0.8rem;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: bold;
+      }
+      
+      .vuelto-text {
+        color: #ffce00;
+        font-weight: bold;
+      }
+    }
+  }
+  
+  .comprobante-container {
+    padding: 1.5rem 0;
+    
+    h3 {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .comprobante-img {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  }
+}

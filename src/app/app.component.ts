@@ -7,7 +7,7 @@ import {
   mailOutline, mailSharp, cubeOutline, cubeSharp, paperPlaneOutline, paperPlaneSharp, 
   heartOutline, heartSharp, archiveOutline, archiveSharp, trashOutline, trashSharp, 
   warningOutline, warningSharp, bookmarkOutline, bookmarkSharp, lockClosedOutline, 
-  lockClosedSharp, logOutOutline, logOutSharp, addCircleOutline, cartOutline, listOutline, cartSharp,walletOutline, walletSharp
+  lockClosedSharp, logOutOutline, logOutSharp, addCircleOutline, cartOutline, listOutline, cartSharp, walletOutline, walletSharp, settingsOutline, settingsSharp
 } from 'ionicons/icons';
 
 import { AuthService } from './services/auth';
@@ -36,8 +36,12 @@ export class AppComponent {
     { title: 'Catalogo de productos', url: '/productos', icon: 'cube' },
     { title: 'Punto de venta', url: '/punto-venta', icon: 'cart' },
     { title: 'Ingreso de Stock', url: '/ingreso-stock', icon: 'archive' }, 
-    { title: 'Alertas y Novedades', url: '/notificaciones', icon: 'warning', id: 'alertas' }, // 🟢 Le agregamos un ID interno
+    { title: 'Alertas y Novedades', url: '/notificaciones', icon: 'warning', id: 'alertas' },
     { title: 'Historial de ventas', url: '/historial-ventas', icon: 'wallet' },
+  ];
+
+  public adminPages = [
+    { title: 'Panel de Administración', url: '/admin', icon: 'settings' },
   ];
   
   constructor() {
@@ -45,7 +49,7 @@ export class AppComponent {
       mailOutline, mailSharp, cubeOutline, cubeSharp, paperPlaneOutline, paperPlaneSharp, 
       heartOutline, heartSharp, archiveOutline, archiveSharp, trashOutline, trashSharp, 
       warningOutline, warningSharp, bookmarkOutline, bookmarkSharp, lockClosedOutline, 
-      lockClosedSharp, logOutOutline, logOutSharp, addCircleOutline, cartOutline, listOutline, cartSharp, walletOutline, walletSharp
+      lockClosedSharp, logOutOutline, logOutSharp, addCircleOutline, cartOutline, listOutline, cartSharp, walletOutline, walletSharp, settingsOutline, settingsSharp
     });
 
     this.iniciarApp();

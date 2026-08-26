@@ -15,7 +15,8 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 // 👇 AQUI AGREGAMOS cubeOutline y pricetagOutline
-import { add, barcodeOutline, createOutline, trashOutline, saveOutline, closeOutline, cameraOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, timeOutline, caretDownOutline, checkmarkCircleOutline} from 'ionicons/icons';import { InventarioService, Producto } from '../services/inventario';
+import { add, barcodeOutline, createOutline, trashOutline, saveOutline, closeOutline, cameraOutline, gridOutline, businessOutline, sparklesOutline, cubeOutline, pricetagOutline, cashOutline, timeOutline, caretDownOutline, checkmarkCircleOutline} from 'ionicons/icons';
+import { InventarioService, Producto } from '../services/inventario';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { AuthService } from '../services/auth';
 import { Camera, CameraResultType, CameraSource, CameraDirection } from '@capacitor/camera'; // <-- IMPORTANTE
@@ -119,14 +120,14 @@ export class ProductosPage implements OnInit {
   }
 
   // 1. Cuando cambias la categoría, actualizamos la lista de marcas
-  cambiarFiltroCategoria(event: any) { 
-    this.filtroCategoria = event.detail.value; 
+  seleccionarCategoria(cat: string) { 
+    this.filtroCategoria = cat; 
     this.actualizarMarcasDisponibles(); // <--- Llamamos a la cascada
     this.aplicarFiltros(); 
   }
 
   // 2. La función que hace la magia de extraer solo las marcas correspondientes
- actualizarMarcasDisponibles() {
+  actualizarMarcasDisponibles() {
     let productosParaMarcas = this.inventarioService.productos;
 
     if (this.filtroCategoria !== 'Todas') {
@@ -155,6 +156,10 @@ export class ProductosPage implements OnInit {
     }
   }
 
+  get marcasVisibles(): string[] {
+    return this.marcasUnicas.slice(0, 8);
+  }
+
   // 🟢 NUEVAS FUNCIONES PARA EL MODAL DE MARCAS
   abrirFiltroMarcas() { this.modalMarcasAbierto = true; }
   cerrarFiltroMarcas() { this.modalMarcasAbierto = false; }
@@ -172,8 +177,7 @@ export class ProductosPage implements OnInit {
     }
   }
 
-  cambiarFiltroMarca(event: any) { this.filtroMarca = event.detail.value; this.aplicarFiltros(); }
-  cambiarFiltroDistribuidor(event: any) { this.filtroDistribuidor = event.detail.value; this.aplicarFiltros(); }
+  seleccionarDistribuidor(dist: string) { this.filtroDistribuidor = dist; this.aplicarFiltros(); }
   buscarProducto(event: any) { this.textoBusqueda = event.target.value.toLowerCase(); this.aplicarFiltros(); }
 
   limpiarBusqueda() {

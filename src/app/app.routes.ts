@@ -39,4 +39,8 @@ export const routes: Routes = [
     path: 'historial-ventas',
     loadComponent: () => import('./historial-ventas/historial-ventas.page').then( m => m.HistorialVentasPage)
   },
+  {
+    path: 'admin',
+    loadComponent: () => import('./admin/admin.page').then( m => m.AdminPage)
+  },
 ];
